@@ -81,6 +81,7 @@ function Cart() {
                 <img
                   alt={item.name}
                   className="h-52 w-full rounded-2xl object-cover sm:h-32"
+                  loading="lazy"
                   src={item.image}
                 />
                 <div className="min-w-0">

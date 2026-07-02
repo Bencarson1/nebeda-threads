@@ -26,7 +26,7 @@ function printMeasurementSheet(order) {
   printWindow.opener = null
 
   const rows = measurements.fields.map((field) => `<tr><td>${escapeHtml(field.name)}</td><td>${escapeHtml(field.value)} ${escapeHtml(measurements.unit)}</td></tr>`).join('')
-  const images = (order.inspirationImages || []).map((image) => `<img src="${escapeHtml(image.url)}" alt="Reference" />`).join('')
+  const images = (order.inspirationImages || []).map((image) => `<img src="${escapeHtml(image.url)}" alt="Nebeda Threads custom order inspiration reference" />`).join('')
 
   printWindow.document.write(`<!doctype html><html><head><title>${reference} Measurements</title><style>
     body{font-family:Arial,sans-serif;color:#17130d;margin:36px;line-height:1.5}header{border-bottom:2px solid #b89450;padding-bottom:18px;margin-bottom:24px}h1{margin:0;font-family:Georgia,serif}small{color:#665f54}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}table{border-collapse:collapse;width:100%;margin-top:14px}td{border-bottom:1px solid #ddd;padding:10px 4px}td:last-child{text-align:right;font-weight:700}.notes{margin-top:24px;padding:16px;background:#f7f1e7}.images{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}.images img{width:100%;height:180px;object-fit:cover}@media print{button{display:none}}@media(max-width:600px){body{margin:20px}.meta{grid-template-columns:1fr}.images{grid-template-columns:1fr}}

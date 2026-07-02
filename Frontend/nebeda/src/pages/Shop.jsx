@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import productOne from '../assets/images/products/product-1.jpg'
 import { useCart } from '../context/cartContextValue'
@@ -34,7 +35,11 @@ function ProductCard({ product, index, onAddToCart }) {
       viewport={{ once: true, amount: 0.18 }}
       whileInView={{ opacity: 1, y: 0 }}
     >
-      <div className="relative h-[320px] overflow-hidden bg-black sm:h-[360px] lg:h-[400px]">
+      <Link
+        aria-label={`View ${product.name}`}
+        className="relative block h-[320px] overflow-hidden bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-gold)] sm:h-[360px] lg:h-[400px]"
+        to={`/shop/${product.slug}`}
+      >
         <img
           alt={product.mainImage?.alt || product.name}
           className="h-full w-full object-cover object-[center_18%] transition duration-700 ease-out group-hover:scale-[1.025]"
@@ -45,14 +50,18 @@ function ProductCard({ product, index, onAddToCart }) {
         <div className="absolute left-4 top-4 rounded-full border border-[rgba(190,151,83,0.5)] bg-black/55 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-gold)] backdrop-blur">
           {product.badge}
         </div>
-      </div>
+      </Link>
 
       <div className="p-5 sm:p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-gold)]">
           {product.displayCategory}
         </p>
         <div className="mt-3 flex items-start justify-between gap-4">
-          <h3 className="min-w-0 font-serif text-2xl leading-tight text-white">{product.name}</h3>
+          <h3 className="min-w-0 font-serif text-2xl leading-tight text-white">
+            <Link className="transition hover:text-[var(--color-gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-gold)]" to={`/shop/${product.slug}`}>
+              {product.name}
+            </Link>
+          </h3>
           <p className="shrink-0 whitespace-nowrap text-sm font-semibold text-[var(--color-cream)]">
             {product.displayPrice || product.price}
           </p>

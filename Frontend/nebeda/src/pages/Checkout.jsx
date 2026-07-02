@@ -461,7 +461,7 @@ function Checkout() {
               <div className="mt-6 space-y-4">
                 {cartItems.map((item) => (
                   <div className="flex gap-3 border-b border-white/10 pb-4 last:border-b-0" key={item.cartItemId || item.productId}>
-                    <img alt={item.name} className="size-16 rounded-xl object-cover" src={item.image} />
+                    <img alt={item.name} className="size-16 rounded-xl object-cover" loading="lazy" src={item.image} />
                     <div className="min-w-0 flex-1">
                       <p className="line-clamp-2 text-sm font-semibold text-white">{item.name}</p>
                       <p className="mt-1 text-xs text-white/52">Quantity: {item.quantity}</p>

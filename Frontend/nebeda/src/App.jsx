@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import SiteMetadata from './components/common/SiteMetadata'
 import Footer from './components/layout/Footer'
@@ -5,46 +6,48 @@ import Navbar from './components/layout/Navbar'
 import FloatingScrollButton from './components/ui/FloatingScrollButton'
 import { ToastProvider } from './components/ui/Toast'
 import { CartProvider } from './context/CartContext'
-import About from './pages/About'
-import AddProduct from './pages/admin/AddProduct'
-import AdminCustomOrders from './pages/admin/AdminCustomOrders'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import AdminEnquiries from './pages/admin/AdminEnquiries'
-import AdminEmailLogs from './pages/admin/AdminEmailLogs'
-import EditProduct from './pages/admin/EditProduct'
-import AdminLogin from './pages/admin/AdminLogin'
-import AdminNewsletter from './pages/admin/AdminNewsletter'
-import AdminOrders from './pages/admin/AdminOrders'
-import AdminPayments from './pages/admin/AdminPayments'
-import AdminProducts from './pages/admin/AdminProducts'
-import AdminSettings from './pages/admin/AdminSettings'
-import AdminUsers from './pages/admin/AdminUsers'
-import AccountDashboard from './pages/account/AccountDashboard'
-import CustomOrderDetails from './pages/account/CustomOrderDetails'
-import MyCustomOrders from './pages/account/MyCustomOrders'
-import MyOrders from './pages/account/MyOrders'
-import OrderDetails from './pages/account/OrderDetails'
-import Profile from './pages/account/Profile'
-import Security from './pages/account/Security'
-import Contact from './pages/Contact'
-import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
-import CustomOrder from './pages/CustomOrder'
-import Home from './pages/Home'
-import Login from './pages/auth/Login'
-import Signup from './pages/auth/Signup'
-import ForgotPassword from './pages/auth/ForgotPassword'
-import ResetPassword from './pages/auth/ResetPassword'
-import VerifyEmail from './pages/auth/VerifyEmail'
-import Shop from './pages/Shop'
-import NotFound from './pages/NotFound'
-import ShippingInformation from './pages/ShippingInformation'
-import PrivacyPolicy from './pages/legal/PrivacyPolicy'
-import ShippingReturns from './pages/legal/ShippingReturns'
-import Terms from './pages/legal/Terms'
-import PaymentCancel from './pages/payment/PaymentCancel'
-import PaymentSuccess from './pages/payment/PaymentSuccess'
 import { isAdminAuthenticated } from './services/authService'
+
+const About = lazy(() => import('./pages/About'))
+const AddProduct = lazy(() => import('./pages/admin/AddProduct'))
+const AdminCustomOrders = lazy(() => import('./pages/admin/AdminCustomOrders'))
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminEmailLogs = lazy(() => import('./pages/admin/AdminEmailLogs'))
+const AdminEnquiries = lazy(() => import('./pages/admin/AdminEnquiries'))
+const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
+const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'))
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
+const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'))
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
+const EditProduct = lazy(() => import('./pages/admin/EditProduct'))
+const AccountDashboard = lazy(() => import('./pages/account/AccountDashboard'))
+const CustomOrderDetails = lazy(() => import('./pages/account/CustomOrderDetails'))
+const MyCustomOrders = lazy(() => import('./pages/account/MyCustomOrders'))
+const MyOrders = lazy(() => import('./pages/account/MyOrders'))
+const OrderDetails = lazy(() => import('./pages/account/OrderDetails'))
+const Profile = lazy(() => import('./pages/account/Profile'))
+const Security = lazy(() => import('./pages/account/Security'))
+const Cart = lazy(() => import('./pages/Cart'))
+const Checkout = lazy(() => import('./pages/Checkout'))
+const Contact = lazy(() => import('./pages/Contact'))
+const CustomOrder = lazy(() => import('./pages/CustomOrder'))
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
+const Home = lazy(() => import('./pages/Home'))
+const Login = lazy(() => import('./pages/auth/Login'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const PaymentCancel = lazy(() => import('./pages/payment/PaymentCancel'))
+const PaymentSuccess = lazy(() => import('./pages/payment/PaymentSuccess'))
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'))
+const ProductDetails = lazy(() => import('./pages/ProductDetails'))
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
+const ShippingInformation = lazy(() => import('./pages/ShippingInformation'))
+const ShippingReturns = lazy(() => import('./pages/legal/ShippingReturns'))
+const Shop = lazy(() => import('./pages/Shop'))
+const Signup = lazy(() => import('./pages/auth/Signup'))
+const Terms = lazy(() => import('./pages/legal/Terms'))
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'))
 
 function ProtectedAdminRoute({ children }) {
   return isAdminAuthenticated() ? children : <Navigate replace to="/admin/login" />
@@ -62,9 +65,11 @@ function App() {
           {isAdminRoute ? null : <Navbar />}
           {isAdminRoute ? null : <FloatingScrollButton />}
           <main>
-            <Routes>
+            <Suspense fallback={<div aria-label="Loading page" className="min-h-[60vh] bg-black" role="status" />}>
+              <Routes>
               <Route element={<Home />} path="/" />
               <Route element={<Shop />} path="/shop" />
+              <Route element={<ProductDetails />} path="/shop/:slug" />
               <Route element={<Cart />} path="/cart" />
               <Route element={<Checkout />} path="/checkout" />
               <Route element={<PaymentSuccess />} path="/payment/success" />
@@ -139,7 +144,8 @@ function App() {
               />
               <Route element={<Navigate replace to="/admin/dashboard" />} path="/admin" />
               <Route element={<NotFound />} path="*" />
-            </Routes>
+              </Routes>
+            </Suspense>
           </main>
           {isAdminRoute ? null : <Footer />}
         </div>

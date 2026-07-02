@@ -101,11 +101,11 @@ const getDashboardStats = asyncHandler(async (_req, res) => {
 });
 
 const getDashboardActivity = asyncHandler(async (req, res) => {
-  const allowedLimits = new Set([10, 25, 50]);
+  const allowedLimits = new Set([5, 10, 25]);
   const requestedPage = Number.parseInt(req.query.page, 10);
   const requestedLimit = Number.parseInt(req.query.limit, 10);
   const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const limit = allowedLimits.has(requestedLimit) ? requestedLimit : 10;
+  const limit = allowedLimits.has(requestedLimit) ? requestedLimit : 5;
   const skip = (page - 1) * limit;
 
   const [result] = await User.aggregate([

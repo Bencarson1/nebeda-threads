@@ -219,8 +219,11 @@ function Home() {
               <img
                 alt="Nebeda Threads heritage silhouette fashion editorial"
                 className="absolute inset-0 h-full w-full object-cover object-[center_16%] transition duration-700 ease-out group-hover:scale-[1.02]"
-                loading="lazy"
+                decoding="async"
+                fetchPriority="high"
+                height="591"
                 src={heritageImage}
+                width="422"
               />
               <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.75),rgba(0,0,0,0.15))]" />
               <div className="relative z-10">
@@ -238,8 +241,11 @@ function Home() {
               <img
                 alt="Nebeda Threads made for presence fashion editorial"
                 className="absolute inset-0 h-full w-full object-cover object-[center_18%] transition duration-700 ease-out group-hover:scale-[1.02]"
-                loading="lazy"
+                decoding="async"
+                height="577"
+                loading="eager"
                 src={presenceImage}
+                width="433"
               />
               <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.75),rgba(0,0,0,0.15))]" />
               <p className="relative z-10 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-gold)] sm:text-xs sm:tracking-[0.28em]">

@@ -126,7 +126,9 @@ function Navbar() {
           <img
             alt="Nebeda Threads"
             className="h-12 w-auto max-w-[180px] object-contain opacity-100 transition duration-500 group-hover:drop-shadow-[0_0_18px_rgba(190,151,83,0.24)] sm:h-14 xl:h-16"
+            height="500"
             src={logo}
+            width="500"
           />
         </Link>
 

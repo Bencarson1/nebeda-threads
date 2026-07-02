@@ -7,7 +7,7 @@ import Button from '../../components/ui/Button'
 import { logoutAdmin } from '../../services/authService'
 import { getDashboardActivity, getDashboardStats } from '../../services/dashboardService'
 
-const activityPageSizes = [10, 25, 50]
+const activityPageSizes = [5, 10, 25]
 
 function formatDate(value) {
   if (!value) return 'Not set'
@@ -20,7 +20,7 @@ function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [activityPage, setActivityPage] = useState(1)
-  const [activityPageSize, setActivityPageSize] = useState(10)
+  const [activityPageSize, setActivityPageSize] = useState(5)
   const [activityData, setActivityData] = useState({ activities: [], page: 1, pages: 1, total: 0 })
   const [isActivityLoading, setIsActivityLoading] = useState(true)
   const [activityError, setActivityError] = useState('')
