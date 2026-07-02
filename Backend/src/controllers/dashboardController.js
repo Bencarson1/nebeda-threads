@@ -31,11 +31,6 @@ const getDashboardStats = asyncHandler(async (_req, res) => {
     newsletterSubscribers,
     activeNewsletterSubscribers,
     unsubscribedNewsletterSubscribers,
-    recentUsers,
-    recentOrders,
-    recentProducts,
-    recentCustomOrders,
-    recentEnquiries,
   ] = await Promise.all([
     Product.countDocuments(),
     Product.countDocuments({ isActive: true }),
@@ -63,11 +58,6 @@ const getDashboardStats = asyncHandler(async (_req, res) => {
     NewsletterSubscriber.countDocuments(),
     NewsletterSubscriber.countDocuments({ isSubscribed: true }),
     NewsletterSubscriber.countDocuments({ isSubscribed: false }),
-    User.find().sort("-createdAt").limit(5).lean(),
-    Order.find({ isArchived: false }).sort("-createdAt").limit(5).lean(),
-    Product.find().sort("-createdAt").limit(5).lean(),
-    CustomOrder.find({ isArchived: false }).sort("-createdAt").limit(5).lean(),
-    Enquiry.find({ isArchived: false }).sort("-createdAt").limit(5).lean(),
   ]);
 
   const [paidCustomRevenueOrders, pendingCustomPayments] = await Promise.all([
@@ -107,14 +97,129 @@ const getDashboardStats = asyncHandler(async (_req, res) => {
       paidCustomOrders: paidOrders,
       totalRevenue,
     },
-    recent: {
-      users: recentUsers,
-      orders: recentOrders,
-      products: recentProducts,
-      customOrders: recentCustomOrders,
-      enquiries: recentEnquiries,
-    },
   });
 });
 
-export { getDashboardStats };
+const getDashboardActivity = asyncHandler(async (req, res) => {
+  const allowedLimits = new Set([10, 25, 50]);
+  const requestedPage = Number.parseInt(req.query.page, 10);
+  const requestedLimit = Number.parseInt(req.query.limit, 10);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const limit = allowedLimits.has(requestedLimit) ? requestedLimit : 10;
+  const skip = (page - 1) * limit;
+
+  const [result] = await User.aggregate([
+    {
+      $project: {
+        _id: 1,
+        type: { $literal: "user" },
+        label: { $literal: "Customer" },
+        title: "$fullName",
+        description: "$email",
+        createdAt: 1,
+      },
+    },
+    {
+      $unionWith: {
+        coll: Order.collection.name,
+        pipeline: [
+          { $match: { isArchived: false } },
+          {
+            $project: {
+              _id: 1,
+              type: { $literal: "order" },
+              label: { $literal: "Order" },
+              title: { $ifNull: ["$customer.fullName", "Customer order"] },
+              description: {
+                $concat: [
+                  { $ifNull: ["$orderStatus", "Pending"] },
+                  " · Payment ",
+                  { $ifNull: ["$paymentStatus", "Pending"] },
+                ],
+              },
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unionWith: {
+        coll: CustomOrder.collection.name,
+        pipeline: [
+          { $match: { isArchived: false } },
+          {
+            $project: {
+              _id: 1,
+              type: { $literal: "custom-order" },
+              label: { $literal: "Custom Order" },
+              title: { $ifNull: ["$fullName", "Custom-order customer"] },
+              description: {
+                $concat: [
+                  { $ifNull: ["$outfitType", "Outfit"] },
+                  " · ",
+                  { $ifNull: ["$orderStatus", "New"] },
+                ],
+              },
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unionWith: {
+        coll: Product.collection.name,
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              type: { $literal: "product" },
+              label: { $literal: "Product" },
+              title: "$name",
+              description: { $ifNull: ["$displayCategory", "Nebeda Threads"] },
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unionWith: {
+        coll: Enquiry.collection.name,
+        pipeline: [
+          { $match: { isArchived: false } },
+          {
+            $project: {
+              _id: 1,
+              type: { $literal: "enquiry" },
+              label: { $literal: "Enquiry" },
+              title: { $ifNull: ["$fullName", "Customer enquiry"] },
+              description: { $ifNull: ["$enquiryType", "General Enquiry"] },
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    { $sort: { createdAt: -1, _id: -1 } },
+    {
+      $facet: {
+        activities: [{ $skip: skip }, { $limit: limit }],
+        metadata: [{ $count: "total" }],
+      },
+    },
+  ]);
+
+  const total = result?.metadata?.[0]?.total || 0;
+  res.json({
+    success: true,
+    activities: result?.activities || [],
+    page,
+    pages: Math.max(1, Math.ceil(total / limit)),
+    total,
+    limit,
+  });
+});
+
+export { getDashboardActivity, getDashboardStats };

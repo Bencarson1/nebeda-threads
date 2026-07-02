@@ -6,7 +6,6 @@ function PrivacyPolicy() {
       <article className="mx-auto max-w-4xl">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-gold)]">Legal</p>
         <h1 className="mt-4 font-serif text-4xl sm:text-6xl">Privacy Policy</h1>
-        <p className="mt-6 rounded-2xl border border-[rgba(190,151,83,0.35)] bg-white/[0.04] p-5 text-sm text-[var(--color-cream)]">This page should be reviewed before public launch.</p>
         <div className="mt-10 space-y-8 text-base leading-8 text-[var(--color-muted)]">
           <section><h2 className="font-serif text-2xl text-white">Information We Collect</h2><p className="mt-3">We may collect customer account details, order and delivery information, custom-order measurements, contact-form messages, and newsletter subscription preferences.</p></section>
           <section><h2 className="font-serif text-2xl text-white">How We Use Information</h2><p className="mt-3">Information is used to provide accounts, process and manage orders, respond to enquiries, deliver requested communications, prevent misuse, and improve Nebeda Threads services.</p></section>

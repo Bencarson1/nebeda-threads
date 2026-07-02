@@ -4,4 +4,8 @@ function getDashboardStats() {
   return apiRequest('/dashboard/stats')
 }
 
-export { getDashboardStats }
+function getDashboardActivity(params) {
+  return apiRequest('/dashboard/activity', { params })
+}
+
+export { getDashboardActivity, getDashboardStats }

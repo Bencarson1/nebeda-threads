@@ -53,7 +53,7 @@ function AdminSettings() {
   }, [navigate])
 
   return (
-    <AdminLayout subtitle="Admin profile and business settings placeholders.">
+    <AdminLayout subtitle="Admin profile and Nebeda Threads business information.">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-gold)]">
           Settings

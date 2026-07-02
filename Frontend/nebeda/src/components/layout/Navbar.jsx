@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { ShoppingBag } from 'lucide-react'
 import Button from '../ui/Button'
 import { navLinks } from '../../data/navLinks'
 import logo from '../../assets/images/logo.png'
@@ -25,13 +26,31 @@ const mobileNavClass = ({ isActive }) =>
       : 'border-transparent font-medium text-white/76 hover:border-[rgba(190,151,83,0.55)] hover:bg-white/5 hover:text-[var(--color-gold)]',
   ].join(' ')
 
-const pillNavClass = ({ isActive }) =>
-  [
-    'rounded-full border px-5 py-3 text-xs font-semibold uppercase tracking-[0.15em] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-gold)]',
-    isActive
-      ? 'border-[var(--color-gold)] bg-[rgba(190,151,83,0.12)] text-[var(--color-gold)]'
-      : 'border-white/15 text-white/74 hover:border-[rgba(190,151,83,0.72)] hover:text-[var(--color-gold)]',
-  ].join(' ')
+function CartIconLink({ onClick, totalItems }) {
+  const countLabel = totalItems > 99 ? '99+' : String(totalItems)
+
+  return (
+    <NavLink
+      aria-label={totalItems ? `View cart with ${totalItems} items` : 'View cart'}
+      className={({ isActive }) => [
+        'relative grid size-11 shrink-0 place-items-center rounded-full border transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-gold)]',
+        isActive
+          ? 'border-[var(--color-gold)] bg-[rgba(190,151,83,0.12)] text-[var(--color-gold)]'
+          : 'border-white/15 text-white/78 hover:border-[rgba(190,151,83,0.72)] hover:text-[var(--color-gold)]',
+      ].join(' ')}
+      onClick={onClick}
+      title="Shopping cart"
+      to="/cart"
+    >
+      <ShoppingBag aria-hidden="true" size={20} strokeWidth={1.8} />
+      {totalItems > 0 ? (
+        <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border border-black bg-[var(--color-gold)] px-1 text-[10px] font-bold leading-none text-black">
+          {countLabel}
+        </span>
+      ) : null}
+    </NavLink>
+  )
+}
 
 function Navbar() {
   const navigate = useNavigate()
@@ -130,9 +149,9 @@ function Navbar() {
         </div>
 
         <div className="hidden shrink-0 items-center gap-3 xl:flex">
-          <NavLink className={pillNavClass} to="/cart">
-            Cart ({totalItems})
-          </NavLink>
+          <Button className="px-5" href={whatsappLink} rel="noreferrer" target="_blank" variant="outline">
+            WhatsApp Order
+          </Button>
 
           <div className="relative" ref={dropdownRef}>
             <button
@@ -171,10 +190,11 @@ function Navbar() {
             ) : null}
           </div>
 
-          <Button className="px-5" href={whatsappLink} rel="noreferrer" target="_blank" variant="outline">
-            WhatsApp Order
-          </Button>
+          <CartIconLink onClick={closeAll} totalItems={totalItems} />
         </div>
+
+        <div className="flex shrink-0 items-center gap-2 xl:hidden">
+          <CartIconLink onClick={closeAll} totalItems={totalItems} />
 
         <button
           aria-expanded={isOpen}
@@ -187,6 +207,7 @@ function Navbar() {
           <span className={`h-px w-5 bg-current transition ${isOpen ? 'opacity-0' : ''}`} />
           <span className={`h-px w-5 bg-current transition ${isOpen ? '-translate-y-2 -rotate-45' : ''}`} />
         </button>
+        </div>
       </nav>
 
       {isOpen ? (
@@ -197,10 +218,6 @@ function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            <NavLink className={mobileNavClass} onClick={closeAll} to="/cart">
-              Cart ({totalItems})
-            </NavLink>
-
             <div className="my-3 border-t border-white/10 pt-4">
               <p className="px-4 text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-gold)]">
                 Account

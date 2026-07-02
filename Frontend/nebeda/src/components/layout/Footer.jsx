@@ -65,9 +65,9 @@ function Footer() {
         <p>Copyright {new Date().getFullYear()} Nebeda Threads. All rights reserved.</p>
         <div className="flex flex-wrap gap-x-5 gap-y-3">
           <Link className="transition hover:text-[var(--color-gold)]" to="/privacy-policy">Privacy Policy</Link>
-          <Link className="transition hover:text-[var(--color-gold)]" to="/shipping-information">Shipping Information</Link>
-          <Link className="transition hover:text-[var(--color-gold)]" to="/terms">Terms</Link>
-          <Link className="transition hover:text-[var(--color-gold)]" to="/shipping-returns">Shipping &amp; Returns</Link>
+          <Link className="transition hover:text-[var(--color-gold)]" to="/terms">Terms &amp; Conditions</Link>
+          <Link className="transition hover:text-[var(--color-gold)]" to="/shipping-information">Shipping Policy</Link>
+          <Link className="transition hover:text-[var(--color-gold)]" to="/shipping-returns">Returns &amp; Refund Policy</Link>
         </div>
       </div>
     </footer>
