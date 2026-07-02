@@ -15,6 +15,7 @@ import {
 } from "../utils/emailTemplates.js";
 import { sendEmailSafely } from "../utils/sendEmail.js";
 import { ensureCheckoutPrice } from "../utils/productPricing.js";
+import { optionMatches } from "../utils/productOptions.js";
 
 const getClientUrl = () => {
   const clientUrl = process.env.CLIENT_URL?.trim().replace(/\/$/, "");
@@ -107,8 +108,8 @@ const validateOrderProductsForPayment = async (order) => {
     }
     const variation = product.variations?.find((entry) =>
       entry.isActive !== false &&
-      (!entry.size || entry.size === item.selectedSize) &&
-      (!entry.color || entry.color === item.selectedColour)
+      (!entry.size || optionMatches(entry.size, item.selectedSize)) &&
+      (!entry.color || optionMatches(entry.color, item.selectedColour))
     );
     if (variation && Number.isFinite(variation.stock) && variation.stock < item.quantity) {
       throw new Error(`The selected ${product.name} variation is out of stock.`);
@@ -291,8 +292,8 @@ const adjustPaidOrderInventory = async (orderId) => {
 
         const variation = product.variations?.find(
           (entry) =>
-            (!entry.size || entry.size === item.selectedSize) &&
-            (!entry.color || entry.color === item.selectedColour),
+            (!entry.size || optionMatches(entry.size, item.selectedSize)) &&
+            (!entry.color || optionMatches(entry.color, item.selectedColour)),
         );
         if (variation && Number.isFinite(variation.stock)) {
           variation.stock = Math.max(0, variation.stock - item.quantity);

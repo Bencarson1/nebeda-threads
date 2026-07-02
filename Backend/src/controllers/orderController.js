@@ -13,6 +13,7 @@ import {
 } from "../utils/emailTemplates.js";
 import { EMAIL_DELIVERY_WARNING, sendEmailSafely } from "../utils/sendEmail.js";
 import { ensureCheckoutPrice } from "../utils/productPricing.js";
+import { findAvailableOption, optionMatches } from "../utils/productOptions.js";
 
 const validateEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
 
@@ -95,8 +96,10 @@ const createOrder = asyncHandler(async (req, res) => {
     const product = productsById.get(item.productId);
     const priceAmount = Number(product.priceAmount);
     const quantity = Number(item.quantity);
-    const selectedSize = String(item.selectedSize || "").trim();
-    const selectedColour = String(item.selectedColour || "").trim();
+    const requestedSize = item.selectedSize ?? item.size;
+    const requestedColour = item.selectedColour ?? item.selectedColor ?? item.colour ?? item.color;
+    const selectedSize = findAvailableOption(product.sizes, requestedSize);
+    const selectedColour = findAvailableOption(product.colors, requestedColour);
 
     if (product.isQuoteOnly) {
       res.status(400);
@@ -106,20 +109,26 @@ const createOrder = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error("Product price is not configured. Please contact Nebeda Threads.");
     }
-    if (product.sizes.length && (!selectedSize || !product.sizes.includes(selectedSize))) {
+    if (product.sizes.length && !selectedSize) {
       res.status(400);
-      throw new Error(`Please select an available size for ${product.name}.`);
+      const suppliedSize = String(requestedSize || "").trim();
+      throw new Error(suppliedSize
+        ? product.name + ": selected size " + suppliedSize + " is not available. Please update your cart."
+        : "Please select an available size for " + product.name + ".");
     }
-    if (product.colors.length && (!selectedColour || !product.colors.includes(selectedColour))) {
+    if (product.colors.length && !selectedColour) {
       res.status(400);
-      throw new Error(`Please select an available colour for ${product.name}.`);
+      const suppliedColour = String(requestedColour || "").trim();
+      throw new Error(suppliedColour
+        ? product.name + ": selected colour " + suppliedColour + " is not available. Please update your cart."
+        : "Please select an available colour for " + product.name + ".");
     }
 
     const selectedVariation = product.variations?.find(
       (variation) =>
         variation.isActive !== false &&
-        (!variation.size || variation.size === selectedSize) &&
-        (!variation.color || variation.color === selectedColour),
+        (!variation.size || optionMatches(variation.size, selectedSize)) &&
+        (!variation.color || optionMatches(variation.color, selectedColour)),
     );
     if (selectedVariation && Number.isFinite(selectedVariation.stock) && selectedVariation.stock < quantity) {
       res.status(409);

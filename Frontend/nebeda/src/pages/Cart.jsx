@@ -84,6 +84,12 @@ function Cart() {
                   src={item.image}
                 />
                 <div className="min-w-0">
+                  {item.requiresSelectionUpdate ? (
+                    <div className="mb-4 rounded-xl border border-[rgba(190,151,83,0.55)] bg-[rgba(190,151,83,0.1)] p-3 text-sm text-[var(--color-cream)]">
+                      <p>Please reselect size/colour for this item.</p>
+                      <Button className="mt-3 px-4 py-2 text-[10px]" to="/shop" variant="outline">Update Selection</Button>
+                    </div>
+                  ) : null}
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <h2 className="break-words font-serif text-2xl text-white">{item.name}</h2>
@@ -150,7 +156,11 @@ function Cart() {
               </div>
             </div>
             <div className="mt-6 flex flex-col gap-3">
-              <Button to="/checkout" variant="primary">Proceed To Checkout</Button>
+              {cartItems.some((item) => item.requiresSelectionUpdate) ? (
+                <Button to="/shop" variant="primary">Update Item Selection</Button>
+              ) : (
+                <Button to="/checkout" variant="primary">Proceed To Checkout</Button>
+              )}
               <Button to="/shop" variant="outline">Continue Shopping</Button>
             </div>
           </aside>

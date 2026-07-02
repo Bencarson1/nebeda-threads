@@ -1,7 +1,8 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import productFallback from '../assets/images/products/product-1.jpg'
 import { CartContext } from './cartContextValue'
 import { getCartItemId, loadStoredCart, parsePriceValue, saveStoredCart } from '../services/cartService'
+import { cleanOption } from '../utils/productOptions'
 
 function getProductImage(product) {
   const mainImage = product.mainImage?.url
@@ -12,8 +13,8 @@ function getProductImage(product) {
 }
 
 function createCartItem(product, selection = {}) {
-  const selectedSize = selection.selectedSize || ''
-  const selectedColour = selection.selectedColour || ''
+  const selectedSize = cleanOption(selection.selectedSize)
+  const selectedColour = cleanOption(selection.selectedColour)
   const productId = product._id || product.id
   return {
     cartItemId: getCartItemId(productId, selectedSize, selectedColour),
@@ -27,6 +28,9 @@ function createCartItem(product, selection = {}) {
     displayCategory: product.displayCategory || 'Nebeda Threads',
     selectedSize,
     selectedColour,
+    availableSizes: Array.isArray(product.sizes) ? product.sizes.map(cleanOption).filter(Boolean) : [],
+    availableColours: Array.isArray(product.colors) ? product.colors.map(cleanOption).filter(Boolean) : [],
+    requiresSelectionUpdate: false,
     quantity: 1,
   }
 }

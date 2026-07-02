@@ -53,6 +53,7 @@ function Checkout() {
   const shippingQuoteRequired = Boolean(shippingQuote?.quoteRequired)
   const shippingCost = Number(selectedShipping?.shippingCost || 0)
   const checkoutTotal = Number(subtotal || 0) + shippingCost
+  const itemsNeedingSelection = cartItems.filter((item) => item.requiresSelectionUpdate)
 
   useEffect(() => {
     let active = true
@@ -135,6 +136,12 @@ function Checkout() {
     }
     const nextErrors = {}
 
+    if (itemsNeedingSelection.length) {
+      const item = itemsNeedingSelection[0]
+      showToast({ message: item.name + ': please reselect size/colour in your cart.', type: 'error' })
+      return false
+    }
+
     required.forEach((field) => {
       if (!formData[field].trim()) nextErrors[field] = `${labels[field]} is required.`
     })
@@ -193,6 +200,8 @@ function Checkout() {
         items: cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
+          selectedSize: item.selectedSize || '',
+          selectedColour: item.selectedColour || '',
         })),
       }
       const data = await createOrder(payload)

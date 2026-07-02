@@ -4,6 +4,7 @@ import Button from '../components/ui/Button'
 import productOne from '../assets/images/products/product-1.jpg'
 import { useCart } from '../context/cartContextValue'
 import { useToast } from '../components/ui/toastContext'
+import { findAvailableOption } from '../utils/productOptions'
 import { getProducts } from '../services/productService'
 import { getWhatsAppProductLink, whatsappLink } from '../data/contactDetails'
 
@@ -214,20 +215,30 @@ function Shop() {
   }
 
   const handleAddToCart = (product, selection) => {
+    const selectedSize = findAvailableOption(product.sizes, selection.selectedSize)
+    const selectedColour = findAvailableOption(product.colors, selection.selectedColour)
     const cartCurrency = cartItems[0]?.currency
     if (cartCurrency && cartCurrency !== product.currency) {
       showToast({ message: 'GBP and EUR products must be checked out separately.', type: 'error' })
       return
     }
     if (product.sizes?.length && !selection.selectedSize) {
-      showToast({ message: 'Please select a size before adding to cart.', type: 'error' })
+      showToast({ message: 'Please select a size.', type: 'error' })
+      return
+    }
+    if (product.sizes?.length && !selectedSize) {
+      showToast({ message: 'This size is not available.', type: 'error' })
       return
     }
     if (product.colors?.length && !selection.selectedColour) {
-      showToast({ message: 'Please select a colour before adding to cart.', type: 'error' })
+      showToast({ message: 'Please select a colour.', type: 'error' })
       return
     }
-    addToCart(product, selection)
+    if (product.colors?.length && !selectedColour) {
+      showToast({ message: 'This colour is not available.', type: 'error' })
+      return
+    }
+    addToCart(product, { selectedSize, selectedColour })
     showToast({ message: 'Added to cart successfully.', type: 'success' })
   }
 

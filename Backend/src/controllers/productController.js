@@ -11,6 +11,7 @@ import Product, {
 import asyncHandler from "../utils/asyncHandler.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 import { ensureCheckoutPrice, normalizeProductPricing } from "../utils/productPricing.js";
+import { normalizeOption } from "../utils/productOptions.js";
 
 const requiredProductFields = [
   "name",
@@ -258,8 +259,8 @@ const validateProductPayload = (payload, { partial = false } = {}) => {
 
   if (Array.isArray(payload.variations)) {
     const invalidVariation = payload.variations.find((variation) =>
-      (variation.size && !payload.sizes?.includes(variation.size)) ||
-      (variation.color && !payload.colors?.includes(variation.color)) ||
+      (variation.size && !payload.sizes?.some((size) => normalizeOption(size) === normalizeOption(variation.size))) ||
+      (variation.color && !payload.colors?.some((color) => normalizeOption(color) === normalizeOption(variation.color))) ||
       (variation.stock !== undefined && (!Number.isFinite(Number(variation.stock)) || Number(variation.stock) < 0))
     );
     if (invalidVariation) return { variations: "A variation contains an invalid size, colour, or stock value" };
