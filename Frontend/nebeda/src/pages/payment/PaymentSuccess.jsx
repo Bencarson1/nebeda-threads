@@ -1,7 +1,16 @@
+import { useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Button from '../../components/ui/Button'
+import { trackPendingPurchase } from '../../utils/analytics'
 
 function PaymentSuccess() {
-  const hasSessionReference = new URLSearchParams(window.location.search).has('session_id')
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+  const hasSessionReference = Boolean(sessionId)
+
+  useEffect(() => {
+    trackPendingPurchase(sessionId)
+  }, [sessionId])
 
   return (
     <main className="flex min-h-[calc(100svh-80px)] items-center bg-black px-5 py-16 text-white sm:px-8 lg:px-10">

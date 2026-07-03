@@ -8,6 +8,7 @@ import { getMyOrderById } from '../../services/accountService'
 import { createCheckoutSession } from '../../services/paymentService'
 import formatOrderReference from '../../utils/orderReference'
 import { downloadInvoicePdf, printInvoice } from '../../utils/invoice'
+import { rememberPendingPurchase } from '../../utils/analytics'
 
 function formatAmount(value, currency = 'GBP') {
   return new Intl.NumberFormat(currency === 'EUR' ? 'en-IE' : 'en-GB', {
@@ -57,6 +58,7 @@ function OrderDetails() {
   const completePayment = async () => {
     setIsRedirecting(true)
     try {
+      rememberPendingPurchase(order)
       const data = await createCheckoutSession(order._id)
       if (!data.checkoutUrl) throw new Error('Stripe Checkout URL is unavailable.')
       window.location.assign(data.checkoutUrl)

@@ -5,6 +5,7 @@ import { useToast } from '../../components/ui/toastContext'
 import { subscribeNewsletter } from '../../services/newsletterService'
 import { signupUser } from '../../services/userAuthService'
 import logEmailWarning from '../../utils/emailDiagnostics'
+import { trackNewsletterLead, trackSignUp } from '../../utils/analytics'
 
 const initialForm = {
   fullName: '',
@@ -72,6 +73,7 @@ function Signup() {
         })
           .then((response) => {
             logEmailWarning(response, 'Signup newsletter subscription')
+            trackNewsletterLead(response)
           })
           .catch(() => {
             showToast({
@@ -81,6 +83,7 @@ function Signup() {
           })
       }
 
+      trackSignUp()
       showToast({ message: 'Account created. Please check your email to verify your address.', type: 'success' })
       logEmailWarning(signupResponse, 'Customer signup')
       navigate(redirectTo, { replace: true })

@@ -9,6 +9,7 @@ import { subscribeNewsletter } from '../services/newsletterService'
 import { getShippingOptions, getShippingQuote } from '../services/shippingService'
 import { getStoredUser, isUserAuthenticated } from '../services/userAuthService'
 import logEmailWarning from '../utils/emailDiagnostics'
+import { rememberPendingPurchase, trackBeginCheckout, trackNewsletterLead } from '../utils/analytics'
 
 function formatAmount(value, currency = 'GBP') {
   return new Intl.NumberFormat(currency === 'EUR' ? 'en-IE' : 'en-GB', { style: 'currency', currency }).format(Number(value || 0))
@@ -178,6 +179,7 @@ function Checkout() {
       return
     }
     if (!validateForm()) return
+    trackBeginCheckout(cartItems, checkoutTotal, cartCurrency)
     setIsSubmitting(true)
 
     try {
@@ -214,12 +216,14 @@ function Checkout() {
             source: 'Checkout',
           })
           logEmailWarning(newsletterResponse, 'Checkout newsletter signup')
+          trackNewsletterLead(newsletterResponse)
         } catch {
           // Newsletter failure must never block an order or payment.
         }
       }
 
       setCreatedOrder(data.order)
+      rememberPendingPurchase(data.order)
       clearCart()
       showToast({ message: 'Your order has been created.', type: 'success' })
       logEmailWarning(data, 'Checkout order')

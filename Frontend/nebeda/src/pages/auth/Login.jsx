@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import { useToast } from '../../components/ui/toastContext'
 import { loginUser } from '../../services/userAuthService'
+import { trackLogin } from '../../utils/analytics'
 
 const initialForm = { email: '', password: '' }
 
@@ -43,6 +44,7 @@ function Login() {
 
     try {
       await loginUser({ email: formData.email.trim(), password: formData.password })
+      trackLogin()
       showToast({ message: 'Welcome back to Nebeda Threads.', type: 'success' })
       navigate(redirectTo, { replace: true })
     } catch (apiError) {

@@ -4,6 +4,7 @@ import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/toastContext'
 import { createEnquiry } from '../services/enquiryService'
 import logEmailWarning from '../utils/emailDiagnostics'
+import { trackLead } from '../utils/analytics'
 import { email, instagramUrl, whatsappLink } from '../data/contactDetails'
 
 const contactOptions = [
@@ -148,6 +149,7 @@ function Contact() {
       setSuccessMessage('Nebeda Threads will contact you soon.')
       showToast({ message: 'Thank you. Your enquiry has been received.', type: 'success' })
       logEmailWarning(response, 'Contact enquiry')
+      trackLead('contact')
       setFormData(initialFormState)
       setErrors({})
     } catch (apiError) {

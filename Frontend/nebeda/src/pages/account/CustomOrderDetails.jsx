@@ -8,6 +8,7 @@ import { createCustomOrderCheckoutSession } from '../../services/paymentService'
 import { useToast } from '../../components/ui/toastContext'
 import formatOrderReference from '../../utils/orderReference'
 import MeasurementTable from '../../components/custom-order/MeasurementTable'
+import { rememberPendingCustomPurchase } from '../../utils/analytics'
 
 function formatDate(value) {
   return value ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(value)) : 'Not set'
@@ -43,6 +44,7 @@ function CustomOrderDetails() {
   const completePayment = async () => {
     setIsRedirecting(true)
     try {
+      rememberPendingCustomPurchase(order)
       const data = await createCustomOrderCheckoutSession(order._id)
       if (!data.checkoutUrl) throw new Error('Stripe Checkout URL is unavailable.')
       window.location.assign(data.checkoutUrl)

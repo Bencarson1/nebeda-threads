@@ -4,6 +4,7 @@ import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/toastContext'
 import { createCustomOrder } from '../services/customOrderService'
 import logEmailWarning from '../utils/emailDiagnostics'
+import { trackLead } from '../utils/analytics'
 import { getWhatsAppMessageLink } from '../data/contactDetails'
 import { isUserAuthenticated } from '../services/userAuthService'
 import { measurementProfiles } from '../data/measurementProfiles'
@@ -382,6 +383,7 @@ function CustomOrder() {
       setSuccessOrder(data.order || data.data || null)
       showToast({ message: 'Your custom order request has been submitted.', type: 'success' })
       logEmailWarning(data, 'Custom order')
+      trackLead('custom_order')
       setFormData(initialFormData)
     } catch (apiError) {
       const errorMessage = apiError.message || 'Unable to submit your custom order request.'

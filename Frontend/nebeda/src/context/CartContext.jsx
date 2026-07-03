@@ -3,6 +3,7 @@ import productFallback from '../assets/images/products/product-1.jpg'
 import { CartContext } from './cartContextValue'
 import { getCartItemId, loadStoredCart, parsePriceValue, saveStoredCart } from '../services/cartService'
 import { cleanOption } from '../utils/productOptions'
+import { trackAddToCart } from '../utils/analytics'
 
 function getProductImage(product) {
   const mainImage = product.mainImage?.url
@@ -41,6 +42,7 @@ function CartProvider({ children }) {
 
   const addToCart = useCallback((product, selection) => {
     const nextItem = createCartItem(product, selection)
+    trackAddToCart(nextItem)
     setCartItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.cartItemId === nextItem.cartItemId)
       return existingItem

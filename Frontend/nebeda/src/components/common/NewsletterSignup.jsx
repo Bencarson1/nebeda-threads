@@ -3,6 +3,7 @@ import Button from '../ui/Button'
 import { useToast } from '../ui/toastContext'
 import { subscribeNewsletter } from '../../services/newsletterService'
 import logEmailWarning from '../../utils/emailDiagnostics'
+import { trackNewsletterLead } from '../../utils/analytics'
 
 function NewsletterSignup({ compact = false, source = 'Website' }) {
   const { showToast } = useToast()
@@ -45,6 +46,7 @@ function NewsletterSignup({ compact = false, source = 'Website' }) {
         type: 'success',
       })
       logEmailWarning(response, 'Newsletter signup')
+      trackNewsletterLead(response)
       setFormData({ email: '', fullName: '' })
     } catch (apiError) {
       showToast({ message: apiError.message || 'Unable to subscribe right now.', type: 'error' })

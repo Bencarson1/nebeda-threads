@@ -1,6 +1,7 @@
 import Button from '../components/ui/Button'
 import { useCart } from '../context/cartContextValue'
 import { useToast } from '../components/ui/toastContext'
+import { trackRemoveFromCart } from '../utils/analytics'
 
 function formatAmount(value, currency = 'GBP') {
   return new Intl.NumberFormat(currency === 'EUR' ? 'en-IE' : 'en-GB', { style: 'currency', currency }).format(Number(value || 0))
@@ -20,6 +21,7 @@ function Cart() {
   const cartCurrency = cartItems[0]?.currency === 'EUR' ? 'EUR' : 'GBP'
 
   const removeItem = (cartItemId) => {
+    trackRemoveFromCart(cartItems.find((item) => item.cartItemId === cartItemId))
     removeFromCart(cartItemId)
     showToast({ message: 'Removed from cart.', type: 'info' })
   }
@@ -35,6 +37,7 @@ function Cart() {
   }
 
   const clearItems = () => {
+    cartItems.forEach(trackRemoveFromCart)
     clearCart()
     showToast({ message: 'Cart cleared.', type: 'warning' })
   }

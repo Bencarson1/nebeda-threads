@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import AnalyticsTracker from './components/common/AnalyticsTracker'
 import SiteMetadata from './components/common/SiteMetadata'
 import Footer from './components/layout/Footer'
 import Navbar from './components/layout/Navbar'
@@ -61,6 +62,7 @@ function App() {
     <ToastProvider>
       <CartProvider>
         <SiteMetadata />
+        <AnalyticsTracker />
         <div className="min-h-screen bg-black">
           {isAdminRoute ? null : <Navbar />}
           {isAdminRoute ? null : <FloatingScrollButton />}

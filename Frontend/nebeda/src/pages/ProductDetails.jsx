@@ -8,6 +8,7 @@ import { useToast } from '../components/ui/toastContext'
 import { getWhatsAppProductLink } from '../data/contactDetails'
 import { getProductBySlug } from '../services/productService'
 import { findAvailableOption } from '../utils/productOptions'
+import { trackViewItem } from '../utils/analytics'
 
 function getProductImage(product) {
   const image = product?.mainImage?.url || product?.images?.[0]?.url
@@ -35,6 +36,7 @@ function ProductDetails() {
     getProductBySlug(slug)
       .then((data) => {
         if (active) {
+          trackViewItem(data.product)
           setRequestState({ slug, product: data.product, isLoading: false, error: '' })
         }
       })
