@@ -24,6 +24,7 @@ const upload = multer({
 
 const uploadProductImages = upload.array("images", 6);
 const uploadCustomOrderImages = upload.array("inspirationImages", 3);
+const uploadReviewImages = upload.array("images", 3);
 
 const handleUploadErrors = (err, _req, res, next) => {
   if (!err) {
@@ -47,4 +48,5 @@ export {
   handleUploadErrors,
   uploadCustomOrderImages,
   uploadProductImages,
+  uploadReviewImages,
 };

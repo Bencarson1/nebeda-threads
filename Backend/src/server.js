@@ -22,6 +22,7 @@ import maintenanceRoutes from "./routes/maintenanceRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 import shippingRoutes from "./routes/shippingRoutes.js";
 import userAuthRoutes from "./routes/userAuthRoutes.js";
 
@@ -87,6 +88,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userAuthRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/shipping", shippingRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);

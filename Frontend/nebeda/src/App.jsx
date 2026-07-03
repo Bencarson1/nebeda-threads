@@ -19,6 +19,7 @@ const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
 const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'))
+const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
@@ -43,6 +44,7 @@ const PaymentSuccess = lazy(() => import('./pages/payment/PaymentSuccess'))
 const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'))
 const ProductDetails = lazy(() => import('./pages/ProductDetails'))
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
+const ReviewSubmission = lazy(() => import('./pages/ReviewSubmission'))
 const ShippingInformation = lazy(() => import('./pages/ShippingInformation'))
 const ShippingReturns = lazy(() => import('./pages/legal/ShippingReturns'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -72,6 +74,7 @@ function App() {
               <Route element={<Home />} path="/" />
               <Route element={<Shop />} path="/shop" />
               <Route element={<ProductDetails />} path="/shop/:slug" />
+              <Route element={<ReviewSubmission />} path="/review/:token" />
               <Route element={<Cart />} path="/cart" />
               <Route element={<Checkout />} path="/checkout" />
               <Route element={<PaymentSuccess />} path="/payment/success" />
@@ -144,7 +147,10 @@ function App() {
                 element={<ProtectedAdminRoute><AdminEmailLogs /></ProtectedAdminRoute>}
                 path="/admin/email-logs"
               />
-              <Route element={<Navigate replace to="/admin/dashboard" />} path="/admin" />
+              <Route
+                element={<ProtectedAdminRoute><AdminReviews /></ProtectedAdminRoute>}
+                path="/admin/reviews"
+              />              <Route element={<Navigate replace to="/admin/dashboard" />} path="/admin" />
               <Route element={<NotFound />} path="*" />
               </Routes>
             </Suspense>

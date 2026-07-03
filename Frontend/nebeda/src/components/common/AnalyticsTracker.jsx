@@ -6,7 +6,8 @@ function AnalyticsTracker() {
   const location = useLocation()
 
   useEffect(() => {
-    trackPageView(location.pathname)
+    const pagePath = location.pathname.startsWith('/review/') ? '/review/:token' : location.pathname
+    trackPageView(pagePath)
   }, [location.pathname])
 
   return null

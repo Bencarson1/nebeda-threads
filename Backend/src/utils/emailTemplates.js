@@ -352,6 +352,30 @@ const newsletterNotificationEmail = (subscriber) => ({
   ),
 });
 
+const reviewRequestEmail = (order, invitations) => {
+  const clientUrl = process.env.CLIENT_URL?.trim().replace(/\/$/, "") || "https://nebedathreads.co.uk";
+  const links = invitations.map((invitation) =>
+    `<div style="margin:18px 0;padding:16px;border:1px solid rgba(190,151,83,.25);border-radius:10px;">
+      <p style="margin:0 0 10px;"><strong>${escapeHtml(invitation.productName)}</strong></p>
+      ${actionButton("Review This Piece", clientUrl + "/review/" + encodeURIComponent(invitation.token))}
+    </div>`,
+  ).join("");
+
+  return {
+    template: "review-request",
+    to: order.customer.email,
+    relatedOrder: order._id,
+    subject: "How was your Nebeda Threads order?",
+    ...wrapEmail(
+      "Share Your Experience",
+      `<p>Hello ${escapeHtml(getFirstName(order.customer.fullName))},</p>
+       <p>Your order has been delivered. We would love to hear how your Nebeda Threads pieces felt and looked.</p>
+       <p><strong>Order reference:</strong> ${escapeHtml(order._id)}</p>
+       ${links}
+       <p>Each secure review link expires after 30 days and can be used once.</p>`,
+    ),
+  };
+};
 // Abandoned cart email automation will be added later with scheduled jobs.
 // Newsletter broadcast emails will be added later using admin campaign tools.
 
@@ -377,5 +401,6 @@ export {
   passwordResetEmail,
   paymentConfirmationEmail,
   paymentFailedEmail,
+  reviewRequestEmail,
   welcomeEmail,
 };

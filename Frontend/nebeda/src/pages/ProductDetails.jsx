@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Button from '../components/ui/Button'
+import ProductReviews from '../components/reviews/ProductReviews'
 import productFallback from '../assets/images/products/product-1.jpg'
 import { useCart } from '../context/cartContextValue'
 import { useToast } from '../components/ui/toastContext'
@@ -186,6 +187,7 @@ function ProductDetails() {
             </div>
           </motion.div>
         </div>
+        <ProductReviews productId={product._id} />
       </article>
     </main>
   )

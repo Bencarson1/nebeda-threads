@@ -22,4 +22,14 @@ const publicWriteLimiter = rateLimit({
   },
 });
 
-export { authLimiter, publicWriteLimiter };
+const reviewSubmissionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many review requests. Please wait and try again.",
+  },
+});
+export { authLimiter, publicWriteLimiter, reviewSubmissionLimiter };

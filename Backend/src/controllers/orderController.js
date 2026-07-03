@@ -10,12 +10,27 @@ import {
   orderPaymentStatusUpdateEmail,
   orderReceivedEmail,
   orderStatusUpdateEmail,
+  reviewRequestEmail,
 } from "../utils/emailTemplates.js";
 import { EMAIL_DELIVERY_WARNING, sendEmailSafely } from "../utils/sendEmail.js";
 import { ensureCheckoutPrice } from "../utils/productPricing.js";
 import { findAvailableOption, optionMatches } from "../utils/productOptions.js";
+import { createReviewInvitations } from "../utils/reviewInvitations.js";
 
 const validateEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
+const sendDeliveryReviewRequest = async (order, statusChanged) => {
+  if (!statusChanged || order.orderStatus !== "Delivered") return null;
+
+  try {
+    const invitations = await createReviewInvitations(order);
+    return invitations.length ? sendEmailSafely(reviewRequestEmail(order, invitations)) : null;
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Review invitation creation failed:", error.message);
+    }
+    return false;
+  }
+};
 
 const validateOrderPayload = (payload) => {
   const requiredCustomerFields = ["fullName", "email"];
@@ -383,16 +398,16 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (adminNotes !== undefined) order.adminNotes = adminNotes;
   await order.save();
 
-  const emailResult =
-    fulfilmentResult.statusChanged
-      ? await sendEmailSafely(orderStatusUpdateEmail(order))
-      : null;
+  const emailResults = await Promise.all([
+    fulfilmentResult.statusChanged ? sendEmailSafely(orderStatusUpdateEmail(order)) : null,
+    sendDeliveryReviewRequest(order, fulfilmentResult.statusChanged),
+  ]);
 
   res.json({
     success: true,
     message: "Order status updated successfully.",
     order,
-    emailWarning: emailResult === false ? EMAIL_DELIVERY_WARNING : undefined,
+    emailWarning: emailResults.includes(false) ? EMAIL_DELIVERY_WARNING : undefined,
   });
 });
 
@@ -518,11 +533,13 @@ const updateAdminOrder = asyncHandler(async (req, res) => {
 
   await order.save();
 
+  const orderStatusChanged = previousStatus !== order.orderStatus;
   const emailResults = await Promise.all([
-    previousStatus !== order.orderStatus ? sendEmailSafely(orderStatusUpdateEmail(order)) : null,
+    orderStatusChanged ? sendEmailSafely(orderStatusUpdateEmail(order)) : null,
     previousPaymentStatus !== order.paymentStatus
       ? sendEmailSafely(orderPaymentStatusUpdateEmail(order))
       : null,
+    sendDeliveryReviewRequest(order, orderStatusChanged),
   ]);
 
   res.json({
