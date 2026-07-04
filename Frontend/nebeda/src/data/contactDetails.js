@@ -1,4 +1,5 @@
 const email = 'nebeda33@gmail.com'
+const supportEmail = 'support@nebedathreads.co.uk'
 const whatsappNumber = '+44 7448 668759'
 const whatsappLink = 'https://wa.me/message/3K25B5XWBN73J1'
 const instagramUrl =
@@ -23,6 +24,7 @@ export {
   getWhatsAppProductLink,
   instagramHandle,
   instagramUrl,
+  supportEmail,
   whatsappLink,
   whatsappNumber,
 }

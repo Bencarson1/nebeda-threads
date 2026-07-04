@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AnalyticsTracker from './components/common/AnalyticsTracker'
+import ChatbotWidget from './components/chatbot/ChatbotWidget'
 import SiteMetadata from './components/common/SiteMetadata'
 import Footer from './components/layout/Footer'
 import Navbar from './components/layout/Navbar'
@@ -68,6 +69,7 @@ function App() {
         <div className="min-h-screen bg-black">
           {isAdminRoute ? null : <Navbar />}
           {isAdminRoute ? null : <FloatingScrollButton />}
+          {isAdminRoute ? null : <ChatbotWidget />}
           <main>
             <Suspense fallback={<div aria-label="Loading page" className="min-h-[60vh] bg-black" role="status" />}>
               <Routes>
