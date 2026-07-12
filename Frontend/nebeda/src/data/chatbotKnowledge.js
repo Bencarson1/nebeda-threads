@@ -105,12 +105,11 @@ const quickQuestions = [
 
 const unknownAnswer = {
   id: 'unknown',
-  answer: "I’m not fully sure about that. Please contact Nebeda Threads directly on WhatsApp so we can help you properly.",
+  answer: "I'd love to help further. This question needs one of our fashion specialists, and you can continue instantly on WhatsApp.",
   links: [{ label: `Email ${supportEmail}`, href: `mailto:${supportEmail}` }],
   handoff: true,
 }
 
 const supportDetails = { instagramUrl, supportEmail, whatsappLink, whatsappNumber }
 
-// Future improvement: make chatbot FAQ editable from the admin dashboard.
 export { chatbotKnowledge, quickQuestions, supportDetails, unknownAnswer }

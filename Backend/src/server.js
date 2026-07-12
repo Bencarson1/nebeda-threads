@@ -11,6 +11,7 @@ import connectDB from "./config/db.js";
 import { validateEnvironment } from "./config/env.js";
 import { stripeWebhookHandler } from "./controllers/paymentController.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+import aiAssistantRoutes from "./routes/aiAssistantRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import customOrderRoutes from "./routes/customOrderRoutes.js";
 import emailLogRoutes from "./routes/emailLogRoutes.js";
@@ -98,6 +99,7 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/email-logs", emailLogRoutes);
 app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ai-assistant", aiAssistantRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

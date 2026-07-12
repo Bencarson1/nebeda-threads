@@ -12,6 +12,31 @@ function ChatbotMessage({ message, onNavigate, onWhatsApp }) {
         : 'ml-7 rounded-2xl rounded-tr-md bg-[var(--color-gold)] px-4 py-3 text-black'}
     >
       <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.text}</p>
+      {isAssistant && message.products?.length ? (
+        <div className="mt-3 grid gap-2">
+          {message.products.map((product) => (
+            <Link
+              className="grid grid-cols-[3.5rem_1fr] gap-3 rounded-xl border border-white/10 bg-black/35 p-2 transition hover:border-[var(--color-gold)]"
+              key={product.id || product.name}
+              onClick={onNavigate}
+              to={product.href || '/shop'}
+            >
+              <div className="overflow-hidden rounded-lg bg-white/10">
+                {product.image ? (
+                  <img alt={product.name} className="aspect-square h-full w-full object-cover" loading="lazy" src={product.image} />
+                ) : (
+                  <div className="aspect-square" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="line-clamp-1 text-sm font-semibold text-white">{product.name}</p>
+                {product.description ? <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/55">{product.description}</p> : null}
+                {product.price ? <p className="mt-1 text-xs font-semibold text-[var(--color-gold)]">{product.price}</p> : null}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : null}
       {isAssistant && message.links?.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {message.links.map((link) => (
@@ -48,7 +73,7 @@ function ChatbotMessage({ message, onNavigate, onWhatsApp }) {
             rel="noreferrer"
             target="_blank"
           >
-            WhatsApp {supportDetails.whatsappNumber}
+            Continue on WhatsApp
           </a>
           <a className="text-xs text-white/60 underline-offset-4 hover:text-[var(--color-gold)] hover:underline" href={`mailto:${supportDetails.supportEmail}`}>Email</a>
           <a className="text-xs text-white/60 underline-offset-4 hover:text-[var(--color-gold)] hover:underline" href={supportDetails.instagramUrl} rel="noreferrer" target="_blank">Instagram</a>

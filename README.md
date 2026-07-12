@@ -136,6 +136,10 @@ counts carefully, and never run it automatically.
 - Production Resend domain verification is not complete
 - Legal pages are staging placeholders and require professional review
 
+## AI Fashion Consultant
+
+The public help assistant uses a lightweight conversation engine with editable admin knowledge, sanitized analytics, guided shopping, measurement guidance, product recommendations from live products, and WhatsApp escalation. Future improvement: connect an AI provider such as OpenAI, Azure OpenAI, Claude, or Gemini behind the existing assistant provider layer without changing the customer UI.
+
 ## Future Roadmap
 
 - Stripe production activation, webhook monitoring, and payment reconciliation

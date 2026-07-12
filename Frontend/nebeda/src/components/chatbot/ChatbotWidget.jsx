@@ -4,12 +4,16 @@ import { MessageCircle, Send, Trash2, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ChatbotMessage from './ChatbotMessage'
 import ChatbotQuickQuestions from './ChatbotQuickQuestions'
-import { quickQuestions } from '../../data/chatbotKnowledge'
+import { initialShoppingOptions } from '../../utils/assistantBusinessRules'
+import { getAssistantReply } from '../../utils/assistantProvider'
+import { getAssistantKnowledge, recordAssistantEventQuietly } from '../../services/aiAssistantService'
+import { getMyOrders } from '../../services/orderService'
+import { getProducts } from '../../services/productService'
 import { getStoredUser, isUserAuthenticated } from '../../services/userAuthService'
 import { trackEvent } from '../../utils/analytics'
-import { matchChatbotQuestion } from '../../utils/chatbotMatcher'
 
 const chatStorageKey = 'nebedaHelpAssistantMessages'
+const profileStorageKey = 'nebedaFashionAssistantProfile'
 const openStorageKey = 'nebedaHelpAssistantOpen'
 const maxMessages = 20
 
@@ -30,7 +34,7 @@ function createWelcomeMessage(customer) {
   return {
     id: 'welcome-' + Date.now(),
     role: 'assistant',
-    text: (name ? 'Hi ' + name + ', ' : 'Hi, ') + "I'm here to help you shop, order, measure, or track your Nebeda Threads request.",
+    text: (name ? 'Hello ' + name + '. ' : 'Hello. ') + "Welcome to Nebeda Threads. I'm your fashion assistant. What are you shopping for today?",
   }
 }
 
@@ -44,11 +48,25 @@ function readStoredMessages(customer) {
   return [createWelcomeMessage(customer)]
 }
 
+function readStoredProfile() {
+  try {
+    const profile = JSON.parse(localStorage.getItem(profileStorageKey) || '{}')
+    return profile && typeof profile === 'object' ? profile : {}
+  } catch {
+    return {}
+  }
+}
+
 function ChatbotWidget() {
   const [customer, setCustomer] = useState(readCustomer)
   const [isOpen, setIsOpen] = useState(() => localStorage.getItem(openStorageKey) === 'true')
   const [messages, setMessages] = useState(() => readStoredMessages(readCustomer()))
+  const [profile, setProfile] = useState(readStoredProfile)
+  const [suggestions, setSuggestions] = useState(() => readStoredProfile().shoppingFor ? ['Recommend products', 'Start custom order', 'Delivery options', 'Track my order'] : initialShoppingOptions)
   const [input, setInput] = useState('')
+  const [isThinking, setIsThinking] = useState(false)
+  const [products, setProducts] = useState(null)
+  const [knowledge, setKnowledge] = useState([])
   const inputRef = useRef(null)
   const launcherRef = useRef(null)
   const messageEndRef = useRef(null)
@@ -63,6 +81,13 @@ function ChatbotWidget() {
     window.addEventListener('nebedaUserAuthChanged', updateCustomer)
     return () => window.removeEventListener('nebedaUserAuthChanged', updateCustomer)
   }, [])
+
+  useEffect(() => {
+    if (!isOpen || knowledge.length) return
+    getAssistantKnowledge()
+      .then(setKnowledge)
+      .catch(() => setKnowledge([]))
+  }, [isOpen, knowledge.length])
 
   useEffect(() => {
     try {
@@ -83,6 +108,14 @@ function ChatbotWidget() {
   }, [isOpen, messages])
 
   useEffect(() => {
+    try {
+      localStorage.setItem(profileStorageKey, JSON.stringify(profile))
+    } catch {
+      // Storage availability must never affect the support widget.
+    }
+  }, [profile])
+
+  useEffect(() => {
     if (!isOpen) return undefined
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') {
@@ -96,7 +129,10 @@ function ChatbotWidget() {
 
   const toggleOpen = () => {
     setIsOpen((current) => {
-      if (!current) trackEvent('chatbot_opened')
+      if (!current) {
+        trackEvent('chatbot_opened')
+        recordAssistantEventQuietly({ eventType: 'opened', source: 'floating-widget' })
+      }
       return !current
     })
   }
@@ -105,27 +141,79 @@ function ChatbotWidget() {
     setMessages((current) => [...current, ...nextMessages].slice(-maxMessages))
   }
 
-  const sendQuestion = (question, quickQuestion = false) => {
+  const ensureProducts = async () => {
+    if (products) return products
+    const response = await getProducts({ limit: 100 })
+    const nextProducts = response.products || []
+    setProducts(nextProducts)
+    return nextProducts
+  }
+
+  const getLatestOrder = async () => {
+    const response = await getMyOrders()
+    const orders = response.orders || []
+    return orders[0] || null
+  }
+
+  const sendQuestion = async (question, quickQuestion = false) => {
     const cleanQuestion = question.trim().slice(0, 500)
-    if (!cleanQuestion) return
-    const answer = matchChatbotQuestion(cleanQuestion)
+    if (!cleanQuestion || isThinking) return
     const timestamp = Date.now()
 
+    appendMessages({ id: 'customer-' + timestamp, role: 'customer', text: cleanQuestion })
+    setInput('')
+    setIsThinking(true)
+
     if (quickQuestion) {
-      trackEvent('chatbot_question_clicked', { question_id: answer.id })
+      trackEvent('chatbot_question_clicked', { question: cleanQuestion })
+      recordAssistantEventQuietly({ eventType: 'suggestion_clicked', questionText: cleanQuestion, source: 'quick-question' })
     }
-    trackEvent('chatbot_message_sent', { matched_topic: answer.id })
-    appendMessages(
-      { id: 'customer-' + timestamp, role: 'customer', text: cleanQuestion },
-      {
+
+    try {
+      let productList = products
+      if (!productList && /recommend|show|under|£|100|200|400|luxury|green|church|wedding|collection|outfit|agbada|bubu/i.test(cleanQuestion)) {
+        productList = await ensureProducts()
+      }
+
+      const reply = await getAssistantReply({
+        customer,
+        editableKnowledge: knowledge,
+        getLatestOrder,
+        input: cleanQuestion,
+        products: productList || [],
+        profile,
+      })
+
+      setProfile(reply.profile || {})
+      setSuggestions(reply.suggestions || [])
+      appendMessages({
         id: 'assistant-' + timestamp,
         role: 'assistant',
-        text: (name ? 'Hi ' + name + ', ' : 'Hi, ') + "I'm here to help you shop, order, measure, or track your Nebeda Threads request.",
-        links: answer.links,
-        handoff: answer.handoff,
-      },
-    )
-    setInput('')
+        ...reply.message,
+      })
+
+      trackEvent('chatbot_message_sent', { matched_topic: reply.topic })
+      recordAssistantEventQuietly({
+        eventType: 'message_sent',
+        topic: reply.topic,
+        questionText: cleanQuestion,
+        colour: reply.profile?.colour,
+        occasion: reply.profile?.occasion,
+        budget: reply.profile?.budget,
+        source: 'chatbot',
+      })
+      ;(reply.events || []).forEach(recordAssistantEventQuietly)
+    } catch {
+      appendMessages({
+        id: 'assistant-error-' + timestamp,
+        role: 'assistant',
+        text: "I'd be happy to help further. This question needs one of our fashion specialists, and you can continue instantly on WhatsApp.",
+        handoff: true,
+      })
+      recordAssistantEventQuietly({ eventType: 'no_answer', topic: 'error', questionText: cleanQuestion })
+    } finally {
+      setIsThinking(false)
+    }
   }
 
   const submit = (event) => {
@@ -134,13 +222,24 @@ function ChatbotWidget() {
   }
 
   const clearChat = () => {
+    const cleanProfile = {}
+    setProfile(cleanProfile)
+    setSuggestions(initialShoppingOptions)
     setMessages([createWelcomeMessage(customer)])
     setInput('')
+    try {
+      localStorage.removeItem(profileStorageKey)
+    } catch {
+      // Ignore storage issues.
+    }
     window.setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   const closeForNavigation = () => setIsOpen(false)
-  const trackWhatsApp = () => trackEvent('chatbot_whatsapp_clicked')
+  const trackWhatsApp = () => {
+    trackEvent('chatbot_whatsapp_clicked')
+    recordAssistantEventQuietly({ eventType: 'whatsapp_escalation', topic: profile.occasion || profile.shoppingFor || 'support' })
+  }
 
   return (
     <>
@@ -148,7 +247,7 @@ function ChatbotWidget() {
         {isOpen ? (
           <motion.section
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            aria-label="Nebeda Threads Help Assistant"
+            aria-label="Nebeda Threads Fashion Assistant"
             id="nebeda-help-assistant"
             aria-modal="false"
             className="fixed bottom-36 right-4 z-[70] flex max-h-[min(70vh,38rem)] w-[calc(100vw-2rem)] max-w-sm origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[rgba(190,151,83,0.45)] bg-[#080808] text-white shadow-[0_28px_90px_rgba(0,0,0,0.58)] sm:right-6"
@@ -159,12 +258,12 @@ function ChatbotWidget() {
           >
             <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4">
               <div className="min-w-0">
-                <p className="truncate font-serif text-lg">Nebeda Threads Help Assistant</p>
-                <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)]">Customer support</p>
+                <p className="truncate font-serif text-lg">Nebeda Threads Fashion Assistant</p>
+                <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)]">Styling and support</p>
               </div>
               <div className="flex shrink-0 gap-1">
                 <button aria-label="Clear chat" className="grid size-10 place-items-center rounded-full text-white/60 transition hover:bg-white/[0.06] hover:text-[var(--color-gold)]" onClick={clearChat} title="Clear chat" type="button"><Trash2 aria-hidden="true" size={17} /></button>
-                <button aria-label="Close help assistant" className="grid size-10 place-items-center rounded-full text-white/60 transition hover:bg-white/[0.06] hover:text-white" onClick={() => { setIsOpen(false); window.setTimeout(() => launcherRef.current?.focus(), 0) }} type="button"><X aria-hidden="true" size={19} /></button>
+                <button aria-label="Close fashion assistant" className="grid size-10 place-items-center rounded-full text-white/60 transition hover:bg-white/[0.06] hover:text-white" onClick={() => { setIsOpen(false); window.setTimeout(() => launcherRef.current?.focus(), 0) }} type="button"><X aria-hidden="true" size={19} /></button>
               </div>
             </header>
 
@@ -172,6 +271,7 @@ function ChatbotWidget() {
               {messages.map((message) => (
                 <ChatbotMessage key={message.id} message={message} onNavigate={closeForNavigation} onWhatsApp={trackWhatsApp} />
               ))}
+              {isThinking ? <p className="px-1 text-xs text-white/45">Stylist is thinking...</p> : null}
               {accountLinks.length ? (
                 <div className="flex flex-wrap gap-2 px-1 pt-1">
                   {accountLinks.map((link) => (
@@ -183,10 +283,10 @@ function ChatbotWidget() {
             </div>
 
             <div className="border-t border-white/10 bg-black/60 px-4 py-3">
-              <ChatbotQuickQuestions onSelect={(question) => sendQuestion(question, true)} questions={quickQuestions} />
+              <ChatbotQuickQuestions onSelect={(question) => sendQuestion(question, true)} questions={suggestions} />
               <form className="mt-3 flex items-end gap-2" onSubmit={submit}>
                 <label className="min-w-0 flex-1">
-                  <span className="sr-only">Ask the help assistant</span>
+                  <span className="sr-only">Ask the fashion assistant</span>
                   <textarea
                     className="max-h-24 min-h-11 w-full resize-none rounded-xl border border-white/10 bg-white/[0.055] px-3 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[var(--color-gold)]"
                     maxLength={500}
@@ -197,13 +297,13 @@ function ChatbotWidget() {
                         sendQuestion(input)
                       }
                     }}
-                    placeholder="Ask a question..."
+                    placeholder="Ask for styling, sizing, delivery, or orders..."
                     ref={inputRef}
                     rows={1}
                     value={input}
                   />
                 </label>
-                <button aria-label="Send message" className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--color-gold)] text-black transition hover:bg-[var(--color-gold-light)] disabled:cursor-not-allowed disabled:opacity-45" disabled={!input.trim()} type="submit"><Send aria-hidden="true" size={18} /></button>
+                <button aria-label="Send message" className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--color-gold)] text-black transition hover:bg-[var(--color-gold-light)] disabled:cursor-not-allowed disabled:opacity-45" disabled={!input.trim() || isThinking} type="submit"><Send aria-hidden="true" size={18} /></button>
               </form>
             </div>
           </motion.section>
@@ -213,7 +313,7 @@ function ChatbotWidget() {
       <button
         aria-controls="nebeda-help-assistant"
         aria-expanded={isOpen}
-        aria-label={isOpen ? 'Close Nebeda Threads Help Assistant' : 'Open Nebeda Threads Help Assistant'}
+        aria-label={isOpen ? 'Close Nebeda Threads Fashion Assistant' : 'Open Nebeda Threads Fashion Assistant'}
         className="fixed bottom-20 right-5 z-[60] grid size-12 place-items-center rounded-full border border-[rgba(190,151,83,0.65)] bg-black text-[var(--color-gold)] shadow-[0_18px_55px_rgba(0,0,0,0.5)] transition hover:-translate-y-1 hover:bg-[var(--color-gold)] hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-gold)] sm:bottom-20 sm:right-6 sm:size-13"
         onClick={toggleOpen}
         ref={launcherRef}

@@ -14,6 +14,7 @@ const About = lazy(() => import('./pages/About'))
 const AddProduct = lazy(() => import('./pages/admin/AddProduct'))
 const AdminCustomOrders = lazy(() => import('./pages/admin/AdminCustomOrders'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminAiAssistant = lazy(() => import('./pages/admin/AdminAiAssistant'))
 const AdminEmailLogs = lazy(() => import('./pages/admin/AdminEmailLogs'))
 const AdminEnquiries = lazy(() => import('./pages/admin/AdminEnquiries'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
@@ -150,9 +151,14 @@ function App() {
                 path="/admin/email-logs"
               />
               <Route
+                element={<ProtectedAdminRoute><AdminAiAssistant /></ProtectedAdminRoute>}
+                path="/admin/ai-assistant"
+              />
+              <Route
                 element={<ProtectedAdminRoute><AdminReviews /></ProtectedAdminRoute>}
                 path="/admin/reviews"
-              />              <Route element={<Navigate replace to="/admin/dashboard" />} path="/admin" />
+              />
+              <Route element={<Navigate replace to="/admin/dashboard" />} path="/admin" />
               <Route element={<NotFound />} path="*" />
               </Routes>
             </Suspense>
