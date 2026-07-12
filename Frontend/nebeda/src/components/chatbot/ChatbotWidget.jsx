@@ -4,6 +4,8 @@ import { MessageCircle, Send, Trash2, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ChatbotMessage from './ChatbotMessage'
 import ChatbotQuickQuestions from './ChatbotQuickQuestions'
+import { useToast } from '../ui/toastContext'
+import { useCart } from '../../context/cartContextValue'
 import { initialShoppingOptions } from '../../utils/assistantBusinessRules'
 import { getAssistantReply } from '../../utils/assistantProvider'
 import { getAssistantKnowledge, recordAssistantEventQuietly } from '../../services/aiAssistantService'
@@ -34,7 +36,7 @@ function createWelcomeMessage(customer) {
   return {
     id: 'welcome-' + Date.now(),
     role: 'assistant',
-    text: (name ? 'Hello ' + name + '. ' : '') + "Welcome to Nebeda Threads. I'm your personal fashion assistant. I can help you choose styles, take measurements, place bespoke orders, explain delivery, and answer any questions.",
+    text: (name ? 'Hello ' + name + '.\n\n' : '') + "\u{1F44B} Welcome to Nebeda Threads.\n\nI'm your Personal Fashion Assistant.\n\nI can help you:\n\u2728 Find the perfect outfit\n\u2728 Recommend styles for your event\n\u2728 Guide your measurements\n\u2728 Start a bespoke order\n\u2728 Answer delivery and payment questions\n\nWhat are you shopping for today?",
   }
 }
 
@@ -58,6 +60,8 @@ function readStoredProfile() {
 }
 
 function ChatbotWidget() {
+  const { addToCart } = useCart()
+  const { showToast } = useToast()
   const [customer, setCustomer] = useState(readCustomer)
   const [isOpen, setIsOpen] = useState(() => localStorage.getItem(openStorageKey) === 'true')
   const [messages, setMessages] = useState(() => readStoredMessages(readCustomer()))
@@ -202,7 +206,10 @@ function ChatbotWidget() {
         budget: reply.profile?.budget,
         source: 'chatbot',
       })
-      ;(reply.events || []).forEach(recordAssistantEventQuietly)
+      ;(reply.events || []).forEach((eventPayload) => {
+        recordAssistantEventQuietly(eventPayload)
+        if (eventPayload.eventType) trackEvent(eventPayload.eventType, { topic: eventPayload.topic, product_name: eventPayload.productName })
+      })
     } catch {
       appendMessages({
         id: 'assistant-error-' + timestamp,
@@ -235,10 +242,18 @@ function ChatbotWidget() {
     window.setTimeout(() => inputRef.current?.focus(), 0)
   }
 
+  const addRecommendedProductToCart = (product) => {
+    if (!product?.cartProduct) return
+    addToCart(product.cartProduct)
+    showToast({ message: 'Added to cart successfully.', type: 'success' })
+    trackEvent('add_to_cart', { source: 'fashion_assistant', item_name: product.name })
+  }
+
   const closeForNavigation = () => setIsOpen(false)
   const trackWhatsApp = () => {
     trackEvent('chatbot_whatsapp_clicked')
     recordAssistantEventQuietly({ eventType: 'whatsapp_escalation', topic: profile.occasion || profile.shoppingFor || 'support' })
+    trackEvent('whatsapp_escalation', { source: 'fashion_assistant' })
   }
 
   return (
@@ -250,7 +265,7 @@ function ChatbotWidget() {
             aria-label="Nebeda Threads Fashion Assistant"
             id="nebeda-help-assistant"
             aria-modal="false"
-            className="fixed bottom-36 right-4 z-[70] flex max-h-[min(70vh,38rem)] w-[calc(100vw-2rem)] max-w-sm origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[rgba(190,151,83,0.45)] bg-[#080808] text-white shadow-[0_28px_90px_rgba(0,0,0,0.58)] sm:right-6"
+            className="fixed bottom-32 right-4 z-[70] flex max-h-[min(76vh,44rem)] w-[calc(100vw-2rem)] max-w-md origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[rgba(190,151,83,0.45)] bg-[#080808] text-white shadow-[0_28px_90px_rgba(0,0,0,0.58)] sm:right-6"
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             role="dialog"
@@ -269,9 +284,9 @@ function ChatbotWidget() {
 
             <div aria-live="polite" className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log">
               {messages.map((message) => (
-                <ChatbotMessage key={message.id} message={message} onNavigate={closeForNavigation} onWhatsApp={trackWhatsApp} />
+                <ChatbotMessage key={message.id} message={message} onAddToCart={addRecommendedProductToCart} onNavigate={closeForNavigation} onWhatsApp={trackWhatsApp} />
               ))}
-              {isThinking ? <p className="px-1 text-xs text-white/45">Stylist is thinking...</p> : null}
+              {isThinking ? <p className="px-1 text-xs text-white/45">Stylist is preparing your edit...</p> : null}
               {accountLinks.length ? (
                 <div className="flex flex-wrap gap-2 px-1 pt-1">
                   {accountLinks.map((link) => (

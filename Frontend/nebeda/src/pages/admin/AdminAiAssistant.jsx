@@ -122,12 +122,12 @@ function AdminAiAssistant() {
   }
 
   return (
-    <AdminLayout subtitle="Review assistant trends and update customer-facing help guidance.">
+    <AdminLayout subtitle="Review style requests, assistant trends, and editable customer guidance.">
       <section className="space-y-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-[var(--color-gold)]">Customer support intelligence</p>
-            <h1 className="mt-2 font-serif text-4xl">AI Assistant</h1>
+            <h1 className="mt-2 font-serif text-4xl">AI Insights</h1>
           </div>
           <p className="max-w-xl text-sm leading-6 text-white/55">
             Trends are aggregated and sanitized. The assistant does not expose personal customer data.

@@ -12,7 +12,7 @@ const sidebarLinks = [
   { label: 'Enquiries', to: '/admin/enquiries' },
   { label: 'Payments', to: '/admin/payments' },
   { label: 'Email Logs', to: '/admin/email-logs' },
-  { label: 'AI Assistant', to: '/admin/ai-assistant' },
+  { label: 'AI Insights', to: '/admin/ai-assistant' },
   { label: 'Reviews', to: '/admin/reviews' },
   { label: 'Settings', to: '/admin/settings' },
 ]

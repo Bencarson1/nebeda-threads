@@ -90,10 +90,14 @@ const recordAssistantEvent = asyncHandler(async (req, res) => {
     "opened",
     "message_sent",
     "suggestion_clicked",
+    "style_advice_started",
     "product_recommendation",
+    "product_recommended",
     "no_answer",
     "whatsapp_escalation",
     "bespoke_started",
+    "measurement_help_started",
+    "order_tracking_requested",
     "conversation_completed",
   ]);
   const eventType = sanitizeShort(req.body?.eventType, 60);

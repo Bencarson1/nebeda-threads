@@ -17,7 +17,7 @@ function dynamicSuggestions(profile = {}, topic = '') {
   if (!profile.occasion) return occasions.slice(0, 6)
   if (!profile.budget) return ['Under \u00a3100', '\u00a3100-\u00a3200', '\u00a3200-\u00a3400', 'Luxury']
   if (topic === 'wedding') return ['Show Agbada', 'Show Couple Outfits', 'Book Bespoke', 'Wedding Accessories']
-  if (topic === 'measurements') return ['Next measurement', 'Male measurements', 'Female measurements', 'Start a Bespoke Order']
+  if (topic === 'measurements') return ['Next measurement', "Men's Measurements", "Women's Measurements", 'Start a Bespoke Order']
   return ['Recommend products', 'Start a Bespoke Order', 'Delivery Information', 'Track my order']
 }
 
@@ -36,8 +36,7 @@ function needsProducts(input, profile = {}) {
     text.includes('emerald') ||
     text.includes('church') ||
     text.includes('wedding') ||
-    text.includes('engagement') ||
-    text.includes('outfit')
+    text.includes('engagement')
   const hasEnoughProfile = Boolean(profile.gender && profile.occasion && profile.budget)
   return explicitRecommendation || hasEnoughProfile
 }
@@ -50,7 +49,7 @@ function updateProfileFromInput(input, current = {}) {
   const budget = detectBudget(input)
   const colour = detectColour(input)
 
-  if (['ready to wear', 'bespoke', 'wedding', 'couple outfit'].includes(text)) next.shoppingFor = input
+  if (['ready to wear', 'bespoke', 'wedding', 'couple outfit', 'wedding collection'].includes(text)) next.shoppingFor = input
   if (text.includes('browse men') || text.includes('men collection') || text.includes("men's")) {
     next.shoppingFor = "Men's Collection"
     next.gender = 'Male'
@@ -59,13 +58,13 @@ function updateProfileFromInput(input, current = {}) {
     next.shoppingFor = "Women's Collection"
     next.gender = 'Female'
   }
-  if (text.includes('help choosing')) next.shoppingFor = 'Guided Shopping'
+  if (text.includes('help choosing') || text.includes('style advice') || text === 'general help' || (text.includes('need') && text.includes('outfit'))) next.shoppingFor = 'Guided Shopping'
   if (gender) next.gender = gender
   if (occasion) next.occasion = occasion
   if (budget) next.budget = budget
   if (colour) next.colour = colour
   if (text.includes('size guide') || text.includes('measure')) next.mode = 'measurements'
-  if (text.includes('bespoke') || text.includes('custom')) next.mode = 'bespoke'
+  if (text.includes('bespoke') || text.includes('tailoring') || text.includes('custom')) next.mode = 'bespoke'
   return next
 }
 
@@ -98,9 +97,25 @@ async function getAssistantReply({
   let nextProfile = updateProfileFromInput(cleanInput, profile)
   const events = []
 
-  if (normalized.includes('size guide') || normalized.includes('measurement help') || normalized.includes('next measurement') || normalized.includes('male measurements') || normalized.includes('female measurements')) {
-    if (normalized.includes('female')) nextProfile = { ...nextProfile, measurementGender: 'Female', measurementIndex: 0, mode: 'measurements' }
-    if (normalized.includes('male')) nextProfile = { ...nextProfile, measurementGender: 'Male', measurementIndex: 0, mode: 'measurements' }
+  if (normalized.includes('size guide') || normalized.includes('measurement help') || normalized.includes('watch measurement video')) {
+    events.push({ eventType: 'measurement_help_started', topic: 'measurements' })
+    return {
+      events,
+      message: {
+        text: "Let's take your measurements together. Choose the guide that fits the garment, and I will walk you through one measurement at a time.",
+        links: [{ label: 'Custom Order Form', to: '/custom-order' }],
+        handoff: normalized.includes('watch measurement video'),
+      },
+      profile: { ...nextProfile, mode: 'measurements' },
+      suggestions: ["Men's Measurements", "Women's Measurements", 'Watch Measurement Video'],
+      topic: 'measurements',
+    }
+  }
+
+  if (normalized.includes('next measurement') || normalized.includes('mens measurements') || normalized.includes("men's measurements") || normalized.includes('male measurements') || normalized.includes('womens measurements') || normalized.includes("women's measurements") || normalized.includes('female measurements')) {
+    events.push({ eventType: 'measurement_help_started', topic: 'measurements' })
+    if (normalized.includes('female') || normalized.includes('women')) nextProfile = { ...nextProfile, measurementGender: 'Female', measurementIndex: 0, mode: 'measurements' }
+    if (normalized.includes('male') || normalized.includes('men')) nextProfile = { ...nextProfile, measurementGender: 'Male', measurementIndex: 0, mode: 'measurements' }
     const step = nextMeasurementStep(nextProfile)
     nextProfile = { ...nextProfile, measurementIndex: step.nextIndex, mode: 'measurements' }
     return {
@@ -139,7 +154,8 @@ async function getAssistantReply({
     }
   }
 
-  if (normalized.includes('track') || normalized.includes('order status') || normalized.includes('check my order')) {
+  if (normalized.includes('track my order') || normalized.includes('track') || normalized.includes('order status') || normalized.includes('check my order')) {
+    events.push({ eventType: 'order_tracking_requested', topic: 'tracking' })
     if (!customer) {
       return {
         events,
@@ -187,10 +203,11 @@ async function getAssistantReply({
 
   const styleAdvice = stylingAdviceFor(cleanInput, nextProfile)
   if (styleAdvice) {
+    events.push({ eventType: 'style_advice_started', topic: nextProfile.occasion || detectOccasion(cleanInput) || 'style-advice' })
     nextProfile = { ...nextProfile, occasion: nextProfile.occasion || detectOccasion(cleanInput) || 'Wedding' }
   }
 
-  if (normalized.includes('start a bespoke order') || normalized.includes('bespoke') || normalized.includes('custom order') || normalized.includes('book bespoke')) {
+  if (normalized.includes('bespoke tailoring') || normalized.includes('start a bespoke order') || normalized.includes('bespoke') || normalized.includes('custom order') || normalized.includes('book bespoke')) {
     events.push({ eventType: 'bespoke_started', topic: 'bespoke' })
     return {
       events,
@@ -208,7 +225,7 @@ async function getAssistantReply({
     const recommendations = filterProducts(products, nextProfile)
     if (recommendations.length) {
       events.push(...recommendations.map((product) => ({
-        eventType: 'product_recommendation',
+        eventType: 'product_recommended',
         productId: product.id,
         productName: product.name,
         topic: nextProfile.occasion || nextProfile.shoppingFor || 'recommendation',
@@ -243,7 +260,7 @@ async function getAssistantReply({
     return {
       events,
       message: {
-        text: 'Welcome to Nebeda Threads. I am your personal fashion assistant. I can help you choose styles, take measurements, place bespoke orders, explain delivery, and answer any questions.',
+        text: "\u{1F44B} Welcome to Nebeda Threads.\n\nI'm your Personal Fashion Assistant.\n\nI can help you:\n\u2728 Find the perfect outfit\n\u2728 Recommend styles for your event\n\u2728 Guide your measurements\n\u2728 Start a bespoke order\n\u2728 Answer delivery and payment questions\n\nWhat are you shopping for today?",
       },
       profile: nextProfile,
       suggestions: initialShoppingOptions,

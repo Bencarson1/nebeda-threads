@@ -1,12 +1,13 @@
 import { normalizeText } from './chatbotMatcher'
 
 const initialShoppingOptions = [
-  "Browse Men's Collection",
-  "Browse Women's Collection",
-  'Size Guide',
-  'Delivery Information',
-  'Speak on WhatsApp',
-  'Start a Bespoke Order',
+  "Men's Collection",
+  "Women's Collection",
+  'Wedding Collection',
+  'Bespoke Tailoring',
+  'I Need Style Advice',
+  'Track My Order',
+  'General Help',
 ]
 
 const occasions = [
@@ -105,8 +106,8 @@ function detectOccasion(input) {
 
 function detectGender(input) {
   const text = normalizeText(input)
-  if (text.includes('male') || text.includes('men') || text.includes("men's")) return 'Male'
-  if (text.includes('female') || text.includes('women') || text.includes("women's")) return 'Female'
+  if (text.includes('male') || text.includes('men') || text.includes("men's") || text === 'mens collection') return 'Male'
+  if (text.includes('female') || text.includes('women') || text.includes("women's") || text === 'womens collection') return 'Female'
   return ''
 }
 
@@ -148,6 +149,8 @@ function filterProducts(products = [], profile = {}) {
       image: productImage(product),
       href: productHref(product),
       description: product.shortDescription || product.displayCategory || '',
+      requiresOptions: Boolean(product.sizes?.length || product.colors?.length || product.colours?.length),
+      cartProduct: product,
     }))
 }
 
