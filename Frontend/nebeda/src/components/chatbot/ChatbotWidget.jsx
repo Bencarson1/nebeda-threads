@@ -34,7 +34,7 @@ function createWelcomeMessage(customer) {
   return {
     id: 'welcome-' + Date.now(),
     role: 'assistant',
-    text: (name ? 'Hello ' + name + '. ' : 'Hello. ') + "Welcome to Nebeda Threads. I'm your fashion assistant. What are you shopping for today?",
+    text: (name ? 'Hello ' + name + '. ' : '') + "Welcome to Nebeda Threads. I'm your personal fashion assistant. I can help you choose styles, take measurements, place bespoke orders, explain delivery, and answer any questions.",
   }
 }
 
@@ -171,7 +171,7 @@ function ChatbotWidget() {
 
     try {
       let productList = products
-      if (!productList && /recommend|show|under|£|100|200|400|luxury|green|church|wedding|collection|outfit|agbada|bubu/i.test(cleanQuestion)) {
+      if (!productList && /recommend|show|browse|under|gbp|100|200|400|luxury|green|emerald|church|wedding|engagement|collection|outfit|agbada|bubu/i.test(cleanQuestion)) {
         productList = await ensureProducts()
       }
 
@@ -259,7 +259,7 @@ function ChatbotWidget() {
             <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4">
               <div className="min-w-0">
                 <p className="truncate font-serif text-lg">Nebeda Threads Fashion Assistant</p>
-                <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)]">Styling and support</p>
+                <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)]">Luxury Style Assistant</p>
               </div>
               <div className="flex shrink-0 gap-1">
                 <button aria-label="Clear chat" className="grid size-10 place-items-center rounded-full text-white/60 transition hover:bg-white/[0.06] hover:text-[var(--color-gold)]" onClick={clearChat} title="Clear chat" type="button"><Trash2 aria-hidden="true" size={17} /></button>

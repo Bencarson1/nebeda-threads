@@ -15,15 +15,29 @@ function dynamicSuggestions(profile = {}, topic = '') {
   if (!profile.shoppingFor) return initialShoppingOptions
   if (!profile.gender) return ['Male', 'Female', 'Show me unisex pieces']
   if (!profile.occasion) return occasions.slice(0, 6)
-  if (!profile.budget) return ['Under £100', '£100-£200', '£200-£400', 'Luxury']
+  if (!profile.budget) return ['Under \u00a3100', '\u00a3100-\u00a3200', '\u00a3200-\u00a3400', 'Luxury']
   if (topic === 'wedding') return ['Show Agbada', 'Show Couple Outfits', 'Book Bespoke', 'Wedding Accessories']
-  if (topic === 'measurements') return ['Next measurement', 'Male measurements', 'Female measurements', 'Start custom order']
-  return ['Recommend products', 'Start custom order', 'Delivery options', 'Track my order']
+  if (topic === 'measurements') return ['Next measurement', 'Male measurements', 'Female measurements', 'Start a Bespoke Order']
+  return ['Recommend products', 'Start a Bespoke Order', 'Delivery Information', 'Track my order']
 }
 
 function needsProducts(input, profile = {}) {
   const text = normalizeText(input)
-  const explicitRecommendation = text.includes('recommend') || text.includes('show') || text.includes('under') || text.includes('£') || text.includes('100') || text.includes('200') || text.includes('400') || text.includes('green') || text.includes('church')
+  const explicitRecommendation =
+    text.includes('recommend') ||
+    text.includes('show') ||
+    text.includes('browse') ||
+    text.includes('under') ||
+    text.includes('gbp') ||
+    text.includes('100') ||
+    text.includes('200') ||
+    text.includes('400') ||
+    text.includes('green') ||
+    text.includes('emerald') ||
+    text.includes('church') ||
+    text.includes('wedding') ||
+    text.includes('engagement') ||
+    text.includes('outfit')
   const hasEnoughProfile = Boolean(profile.gender && profile.occasion && profile.budget)
   return explicitRecommendation || hasEnoughProfile
 }
@@ -37,14 +51,20 @@ function updateProfileFromInput(input, current = {}) {
   const colour = detectColour(input)
 
   if (['ready to wear', 'bespoke', 'wedding', 'couple outfit'].includes(text)) next.shoppingFor = input
-  if (text.includes('men collection') || text.includes("men's")) next.shoppingFor = "Men's Collection"
-  if (text.includes('women collection') || text.includes("women's")) next.shoppingFor = "Women's Collection"
+  if (text.includes('browse men') || text.includes('men collection') || text.includes("men's")) {
+    next.shoppingFor = "Men's Collection"
+    next.gender = 'Male'
+  }
+  if (text.includes('browse women') || text.includes('women collection') || text.includes("women's")) {
+    next.shoppingFor = "Women's Collection"
+    next.gender = 'Female'
+  }
   if (text.includes('help choosing')) next.shoppingFor = 'Guided Shopping'
   if (gender) next.gender = gender
   if (occasion) next.occasion = occasion
   if (budget) next.budget = budget
   if (colour) next.colour = colour
-  if (text.includes('measure')) next.mode = 'measurements'
+  if (text.includes('size guide') || text.includes('measure')) next.mode = 'measurements'
   if (text.includes('bespoke') || text.includes('custom')) next.mode = 'bespoke'
   return next
 }
@@ -78,7 +98,7 @@ async function getAssistantReply({
   let nextProfile = updateProfileFromInput(cleanInput, profile)
   const events = []
 
-  if (normalized.includes('next measurement') || normalized.includes('male measurements') || normalized.includes('female measurements')) {
+  if (normalized.includes('size guide') || normalized.includes('measurement help') || normalized.includes('next measurement') || normalized.includes('male measurements') || normalized.includes('female measurements')) {
     if (normalized.includes('female')) nextProfile = { ...nextProfile, measurementGender: 'Female', measurementIndex: 0, mode: 'measurements' }
     if (normalized.includes('male')) nextProfile = { ...nextProfile, measurementGender: 'Male', measurementIndex: 0, mode: 'measurements' }
     const step = nextMeasurementStep(nextProfile)
@@ -90,8 +110,32 @@ async function getAssistantReply({
         links: [{ label: 'Open Custom Order Form', to: '/custom-order' }],
       },
       profile: nextProfile,
-      suggestions: ['Next measurement', 'Start custom order', 'WhatsApp measurement help'],
+      suggestions: ['Next measurement', 'Start a Bespoke Order', 'Speak on WhatsApp'],
       topic: 'measurements',
+    }
+  }
+
+  if (normalized.includes('speak on whatsapp') || normalized.includes('whatsapp stylist')) {
+    return {
+      events: [{ eventType: 'whatsapp_escalation', topic: 'support' }],
+      message: {
+        text: "I'd love to help further. This question needs one of our fashion specialists, and you can continue instantly on WhatsApp.",
+        handoff: true,
+      },
+      profile: nextProfile,
+      suggestions: ["Browse Men's Collection", "Browse Women's Collection", 'Start a Bespoke Order'],
+      topic: 'contact',
+    }
+  }
+
+  if (normalized.includes('delivery information')) {
+    const answer = answerFromEditableKnowledge(matchChatbotQuestion('delivery shipping'), editableKnowledge)
+    return {
+      events,
+      message: { text: answer.answer, links: answer.links, handoff: answer.handoff },
+      profile: nextProfile,
+      suggestions: ['UK delivery', 'Nigeria shipping', 'Speak on WhatsApp'],
+      topic: 'shipping',
     }
   }
 
@@ -104,7 +148,7 @@ async function getAssistantReply({
           links: [{ label: 'Login', to: '/login?redirect=/account/orders' }, { label: 'My Orders', to: '/account/orders' }],
         },
         profile: nextProfile,
-        suggestions: ['Login', 'Delivery options', 'Contact Nebeda Threads'],
+        suggestions: ['Login', 'Delivery Information', 'Speak on WhatsApp'],
         topic: 'tracking',
       }
     }
@@ -120,7 +164,7 @@ async function getAssistantReply({
             links: [{ label: 'Open My Orders', to: '/account/orders' }],
           },
           profile: nextProfile,
-          suggestions: ['Delivery options', 'Custom Orders', 'Contact Nebeda Threads'],
+          suggestions: ['Delivery Information', 'Custom Orders', 'Speak on WhatsApp'],
           topic: 'tracking',
         }
       }
@@ -136,7 +180,7 @@ async function getAssistantReply({
         handoff: true,
       },
       profile: nextProfile,
-      suggestions: ['Delivery options', 'Contact Nebeda Threads'],
+      suggestions: ['Delivery Information', 'Speak on WhatsApp'],
       topic: 'tracking',
     }
   }
@@ -146,7 +190,7 @@ async function getAssistantReply({
     nextProfile = { ...nextProfile, occasion: nextProfile.occasion || detectOccasion(cleanInput) || 'Wedding' }
   }
 
-  if (normalized.includes('bespoke') || normalized.includes('custom order') || normalized.includes('book bespoke')) {
+  if (normalized.includes('start a bespoke order') || normalized.includes('bespoke') || normalized.includes('custom order') || normalized.includes('book bespoke')) {
     events.push({ eventType: 'bespoke_started', topic: 'bespoke' })
     return {
       events,
@@ -155,8 +199,43 @@ async function getAssistantReply({
         links: [{ label: 'Start Custom Order', to: '/custom-order' }],
       },
       profile: { ...nextProfile, mode: 'bespoke' },
-      suggestions: ['Wedding Outfit', 'Agbada', 'Bubu', 'Measurement help'],
+      suggestions: ['Wedding Outfit', 'Agbada', 'Bubu', 'Size Guide'],
       topic: 'bespoke',
+    }
+  }
+
+  if (needsProducts(cleanInput, nextProfile) && products?.length) {
+    const recommendations = filterProducts(products, nextProfile)
+    if (recommendations.length) {
+      events.push(...recommendations.map((product) => ({
+        eventType: 'product_recommendation',
+        productId: product.id,
+        productName: product.name,
+        topic: nextProfile.occasion || nextProfile.shoppingFor || 'recommendation',
+      })))
+      return {
+        events,
+        message: {
+          text: [styleAdvice, 'Based on what you have shared, these existing Nebeda Threads pieces are the closest fit.'].filter(Boolean).join('\n\n'),
+          products: recommendations,
+          links: [{ label: 'Shop Collection', to: '/shop' }],
+        },
+        profile: nextProfile,
+        suggestions: dynamicSuggestions(nextProfile, normalizeText(nextProfile.occasion)),
+        topic: 'recommendation',
+      }
+    }
+
+    return {
+      events: [...events, { eventType: 'no_answer', topic: 'recommendation', questionText: cleanInput }],
+      message: {
+        text: [styleAdvice, 'I do not want to invent products that are not available. A bespoke request may be the better route for this exact style, colour, or deadline.'].filter(Boolean).join('\n\n'),
+        links: [{ label: 'Start Custom Order', to: '/custom-order' }],
+        handoff: true,
+      },
+      profile: nextProfile,
+      suggestions: ['Start a Bespoke Order', 'Browse Men\'s Collection', 'Speak on WhatsApp'],
+      topic: 'recommendation',
     }
   }
 
@@ -164,7 +243,7 @@ async function getAssistantReply({
     return {
       events,
       message: {
-        text: 'Welcome to Nebeda Threads. I am your fashion assistant. What are you shopping for today?',
+        text: 'Welcome to Nebeda Threads. I am your personal fashion assistant. I can help you choose styles, take measurements, place bespoke orders, explain delivery, and answer any questions.',
       },
       profile: nextProfile,
       suggestions: initialShoppingOptions,
@@ -197,42 +276,8 @@ async function getAssistantReply({
       events,
       message: { text: 'Many customers find it easier when we narrow the budget first. Which range feels right?' },
       profile: nextProfile,
-      suggestions: ['Under £100', '£100-£200', '£200-£400', 'Luxury'],
+      suggestions: ['Under \u00a3100', '\u00a3100-\u00a3200', '\u00a3200-\u00a3400', 'Luxury'],
       topic: 'budget',
-    }
-  }
-  if (needsProducts(cleanInput, nextProfile) && products?.length) {
-    const recommendations = filterProducts(products, nextProfile)
-    if (recommendations.length) {
-      events.push(...recommendations.map((product) => ({
-        eventType: 'product_recommendation',
-        productId: product.id,
-        productName: product.name,
-        topic: nextProfile.occasion || nextProfile.shoppingFor || 'recommendation',
-      })))
-      return {
-        events,
-        message: {
-          text: [styleAdvice, 'Based on what you have shared, these existing Nebeda Threads pieces are the closest fit.'].filter(Boolean).join('\n\n'),
-          products: recommendations,
-          links: [{ label: 'Shop Collection', to: '/shop' }],
-        },
-        profile: nextProfile,
-        suggestions: dynamicSuggestions(nextProfile, normalizeText(nextProfile.occasion)),
-        topic: 'recommendation',
-      }
-    }
-
-    return {
-      events: [...events, { eventType: 'no_answer', topic: 'recommendation', questionText: cleanInput }],
-      message: {
-        text: [styleAdvice, 'I do not want to invent products that are not available. A bespoke request may be the better route for this exact style, colour, or deadline.'].filter(Boolean).join('\n\n'),
-        links: [{ label: 'Start Custom Order', to: '/custom-order' }],
-        handoff: true,
-      },
-      profile: nextProfile,
-      suggestions: ['Start custom order', 'Show ready to wear', 'WhatsApp stylist'],
-      topic: 'recommendation',
     }
   }
 

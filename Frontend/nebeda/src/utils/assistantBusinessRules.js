@@ -1,13 +1,12 @@
 import { normalizeText } from './chatbotMatcher'
 
 const initialShoppingOptions = [
-  'Ready to Wear',
-  'Bespoke',
-  'Wedding',
-  'Couple Outfit',
-  "Men's Collection",
-  "Women's Collection",
-  'I need help choosing',
+  "Browse Men's Collection",
+  "Browse Women's Collection",
+  'Size Guide',
+  'Delivery Information',
+  'Speak on WhatsApp',
+  'Start a Bespoke Order',
 ]
 
 const occasions = [
@@ -23,7 +22,7 @@ const occasions = [
   'Other',
 ]
 
-const budgets = ['Under £100', '£100-£200', '£200-£400', 'Luxury']
+const budgets = ['Under \u00a3100', '\u00a3100-\u00a3200', '\u00a3200-\u00a3400', 'Luxury']
 
 const measurementFlows = {
   female: [
@@ -60,7 +59,7 @@ const measurementFlows = {
   ],
 }
 
-const colourWords = ['black', 'white', 'gold', 'green', 'blue', 'red', 'cream', 'brown', 'purple', 'pink', 'silver']
+const colourWords = ['black', 'white', 'gold', 'green', 'emerald', 'blue', 'red', 'cream', 'brown', 'purple', 'pink', 'silver']
 
 function getProductPrice(product) {
   const value = Number(product?.priceAmount ?? product?.numericPrice)
@@ -79,17 +78,17 @@ function productHref(product) {
 
 function detectBudget(input) {
   const text = normalizeText(input)
-  if (text.includes('under 100') || text.includes('less than 100') || text.includes('under £100')) return 'Under £100'
-  if (text.includes('100') && text.includes('200')) return '£100-£200'
-  if (text.includes('200') && text.includes('400')) return '£200-£400'
+  if (text.includes('under 100') || text.includes('less than 100') || text.includes('under \u00a3100')) return 'Under \u00a3100'
+  if (text.includes('100') && text.includes('200')) return '\u00a3100-\u00a3200'
+  if (text.includes('200') && text.includes('400')) return '\u00a3200-\u00a3400'
   if (text.includes('luxury') || text.includes('premium')) return 'Luxury'
   return budgets.find((budget) => normalizeText(budget) === text) || ''
 }
 
 function budgetRange(label) {
-  if (label === 'Under £100') return [0, 100]
-  if (label === '£100-£200') return [100, 200]
-  if (label === '£200-£400') return [200, 400]
+  if (label === 'Under \u00a3100') return [0, 100]
+  if (label === '\u00a3100-\u00a3200') return [100, 200]
+  if (label === '\u00a3200-\u00a3400') return [200, 400]
   if (label === 'Luxury') return [400, Infinity]
   return [0, Infinity]
 }
@@ -126,17 +125,18 @@ function filterProducts(products = [], profile = {}) {
       const searchText = normalizeText([
         product.name,
         product.shortDescription,
+        product.description,
         product.displayCategory,
         product.gender,
         product.badge,
+        product.fabric,
         ...(product.categories || []),
         ...(product.colors || product.colours || []),
+        ...(product.sizes || []),
       ].join(' '))
       if (gender && !searchText.includes(gender.toLowerCase()) && !searchText.includes('unisex')) return false
-      if (colour && !searchText.includes(colour)) return false
-      if (occasion && !searchText.includes(occasion) && occasion !== 'church' && occasion !== 'casual') {
-        return false
-      }
+      if (colour && !searchText.includes(colour) && !(colour === 'emerald' && searchText.includes('green'))) return false
+      if (occasion && !searchText.includes(occasion) && !['church', 'casual', 'engagement', 'wedding'].includes(occasion)) return false
       if (shoppingFor.includes('wedding') && !searchText.includes('wedding') && !searchText.includes('bespoke')) return false
       return true
     })
@@ -144,7 +144,7 @@ function filterProducts(products = [], profile = {}) {
     .map(({ product, price }) => ({
       id: product._id,
       name: product.name,
-      price: product.displayPrice || product.price || (price ? `£${price}` : ''),
+      price: product.displayPrice || product.price || (price ? `\u00a3${price}` : ''),
       image: productImage(product),
       href: productHref(product),
       description: product.shortDescription || product.displayCategory || '',
@@ -157,6 +157,10 @@ function stylingAdviceFor(input, profile = {}) {
 
   if (text.includes('nigerian wedding') || normalizeText(occasion).includes('wedding')) {
     return "That's a beautiful occasion. For a Nigerian wedding, Nebeda Threads would usually guide you toward refined agbada, aso oke, kaftan, bubu, or a coordinated couple look. Rich jewel tones, gold accents, lace, aso oke, and structured tailoring work especially well because they feel celebratory without losing elegance."
+  }
+
+  if (text.includes('engagement')) {
+    return 'For an engagement celebration, choose something polished with presence: aso oke details, lace, elegant kaftan styling, a structured bubu, or a coordinated couple look. Emerald, gold, cream, and deep jewel tones photograph beautifully.'
   }
 
   if (text.includes('church')) {
