@@ -107,6 +107,7 @@ function Cart() {
                     <div className="flex w-fit items-center overflow-hidden rounded-full border border-white/10">
                       <button
                         className="grid size-11 place-items-center text-white/72 transition hover:bg-white/10 hover:text-[var(--color-gold)]"
+                        aria-label={`Decrease quantity of ${item.name}`}
                         onClick={() => decreaseItem(item.cartItemId)}
                         type="button"
                       >
@@ -117,6 +118,7 @@ function Cart() {
                       </span>
                       <button
                         className="grid size-11 place-items-center text-white/72 transition hover:bg-white/10 hover:text-[var(--color-gold)]"
+                        aria-label={`Increase quantity of ${item.name}`}
                         onClick={() => increaseItem(item.cartItemId)}
                         type="button"
                       >
