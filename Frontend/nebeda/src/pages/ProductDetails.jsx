@@ -11,9 +11,16 @@ import { getProductBySlug } from '../services/productService'
 import { findAvailableOption } from '../utils/productOptions'
 import { trackViewItem } from '../utils/analytics'
 
-function getProductImage(product) {
-  const image = product?.mainImage?.url || product?.images?.[0]?.url
-  return typeof image === 'string' && image.startsWith('http') ? image : productFallback
+function getProductImages(product) {
+  const candidates = [product?.mainImage, ...(Array.isArray(product?.images) ? product.images : [])]
+  const seen = new Set()
+  const images = candidates.flatMap((image) => {
+    if (!image || typeof image.url !== 'string' || !/^https?:\\/\\//i.test(image.url)) return []
+    if (seen.has(image.url)) return []
+    seen.add(image.url)
+    return [{ url: image.url, alt: image.alt || product.name + ' by Nebeda Threads' }]
+  })
+  return images.length ? images : [{ url: productFallback, alt: product.name + ' by Nebeda Threads' }]
 }
 
 function ProductDetails() {
@@ -28,6 +35,7 @@ function ProductDetails() {
   }))
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColour, setSelectedColour] = useState('')
+  const [gallerySelection, setGallerySelection] = useState({ slug, index: 0 })
   const isLoading = requestState.slug !== slug || requestState.isLoading
   const product = requestState.slug === slug ? requestState.product : null
   const error = requestState.slug === slug ? requestState.error : ''
@@ -111,6 +119,9 @@ function ProductDetails() {
     )
   }
 
+  const productImages = getProductImages(product)
+  const imageIndex = gallerySelection.slug === slug ? gallerySelection.index : 0
+  const selectedImage = productImages[imageIndex] || productImages[0]
   const isQuoteOnly = product.isQuoteOnly === true
   const isOutOfStock = product.trackInventory && Number(product.inventory) <= 0
 
@@ -128,17 +139,35 @@ function ProductDetails() {
         <div className="mt-8 grid items-start gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.04]"
+            className="min-w-0"
             initial={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.55 }}
           >
-            <img
-              alt={product.mainImage?.alt || product.name + ' by Nebeda Threads'}
-              className="aspect-[4/5] h-auto w-full object-cover object-[center_18%]"
-              decoding="async"
-              fetchPriority="high"
-              src={getProductImage(product)}
-            />
+            <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.04]">
+              <img
+                alt={selectedImage.alt}
+                className="aspect-[4/5] h-auto w-full object-contain"
+                decoding="async"
+                fetchPriority="high"
+                src={selectedImage.url}
+              />
+            </div>
+            {productImages.length > 1 ? (
+              <div aria-label="Product photographs" className="mt-4 flex gap-3 overflow-x-auto pb-2" role="group">
+                {productImages.map((image, index) => (
+                  <button
+                    aria-label={`View photograph ${index + 1} of ${productImages.length} for ${product.name}`}
+                    aria-pressed={index === imageIndex}
+                    className={`shrink-0 overflow-hidden rounded-xl border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-gold)] ${index === imageIndex ? 'border-[var(--color-gold)]' : 'border-white/20'}`}
+                    key={image.url}
+                    onClick={() => setGallerySelection({ slug, index })}
+                    type="button"
+                  >
+                    <img alt="" className="h-24 w-20 object-cover" loading="lazy" src={image.url} />
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </motion.div>
 
           <motion.div
